@@ -10,7 +10,7 @@ public class MahjongServerMain {
 
 			LocateRegistry.createRegistry(portnum);
 			MahjongServer eeeee = new MahjongServer();
-			String uri = "rmi://localhost:" + portnum + "/test_print";
+			String uri = "rmi://localhost:" + portnum + "/mahjong";
 			Naming.bind(uri, eeeee);
 			System.out.println("le serveur a démarré");
 
