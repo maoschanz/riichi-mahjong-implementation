@@ -7,13 +7,14 @@ import java.util.Random;
 import java.util.ArrayList;
 import java.rmi.RemoteException;
 
-public class MahjongClient {
+public class MahjongPlayer {
 	private MahjongInterface server;
 	private String pseudo;
 	private int playerId;
 	private ArrayList<MahjongTuile> hand = new ArrayList<MahjongTuile>();
+	// TODO la rivière devrait être là pour pouvoir être affichée et mise à jour
 
-	public MahjongClient (MahjongInterface server) {
+	public MahjongPlayer (MahjongInterface server) {
 		this.server = server;
 		this.initPseudo();
 		boolean accepted = false;
@@ -21,7 +22,7 @@ public class MahjongClient {
 			accepted = this.server.registerPlayer(this.playerId, this.pseudo);
 			System.out.println("Connecté : " + accepted);
 		} catch (RemoteException e){
-			System.out.println("erreur à l'enregistrement du client : " + e);
+			System.out.println("[erreur à l'enregistrement du client] " + e);
 		}
 		if (!accepted) {
 			System.out.println("Trop de joueurs sur le serveur");
@@ -61,10 +62,11 @@ public class MahjongClient {
 		// System.out.println(this.pseudo + ' ' + this.playerId);
 	}
 
-	//----------------------------------------------------------------------------
+	//----------------------------------------------------------------------------------------------
 
 	private int askIntInput() {
 		Scanner keyboard = new Scanner(System.in);
+		System.out.println("\nChoisissez une tuile à jeter");
 		for(int i=0; i<this.hand.size(); i++) {
 			System.out.println("[" + i + "] - " + this.hand.get(i));
 		}
@@ -75,26 +77,32 @@ public class MahjongClient {
 		}
 	}
 
-	//----------------------------------------------------------------------------
+	//----------------------------------------------------------------------------------------------
 
+	/*
+	 * Piocher une tuile DOIT faire appel au serveur, puisque c'est lui qui a la muraille.
+	 */
 	private void piocheTuile() {
 		try {
 			MahjongTuile t = this.server.pioche();
 			this.hand.add(t);
 			// System.out.println("pioche = " + t.toString());
 		} catch (RemoteException e){
-			System.out.println("erreur client (pioche) : " + e);
+			System.out.println("[erreur client (pioche)] " + e);
 		}
 	}
 
+	/*
+	 * TODO pas besoin de faire appel au serveur pour ça normalement
+	 */
 	private void poseTuile(int index) {
 		try {
 			MahjongTuile t = this.hand.get(index);
 			this.hand.remove(t);
 			this.server.pose(t);
-			// System.out.println("pioche = " + t.toString());
+			// System.out.println("pose = " + t.toString());
 		} catch (RemoteException e){
-			System.out.println("erreur client (pose) : " + e);
+			System.out.println("[erreur client (pose)] " + e);
 		}
 	}
 

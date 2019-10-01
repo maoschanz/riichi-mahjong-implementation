@@ -22,6 +22,7 @@ public class MahjongTuile implements Serializable {
 
 	public String toString() {
 		String msg = "";
+		// XXX c'est vraiment un code dégueulasse sa mère
 		switch(this.type) {
 			case DRAGON:
 				if (this.chiffre == 0) {
