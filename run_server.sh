@@ -1,7 +1,5 @@
 #!/bin/bash
 
-cd Server
-tilix -e java MahjongServerMain &
-cd ..
+tilix -e java fr.univ_nantes.SimpleMahjong.Server.MahjongServerMain &
 
 exit 0

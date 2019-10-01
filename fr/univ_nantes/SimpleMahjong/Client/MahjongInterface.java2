@@ -1,3 +1,5 @@
+package fr.univ_nantes.SimpleMahjong.Client;
+
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 

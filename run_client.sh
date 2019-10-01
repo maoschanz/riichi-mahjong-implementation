@@ -1,8 +1,6 @@
 #!/bin/bash
 
-cd Client
 #tilix -e java MahjongClientMain &
-java MahjongClientMain &
-cd ..
+java fr.univ_nantes.SimpleMahjong.Server.MahjongServerMain &
 
 exit 0

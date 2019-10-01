@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # javac */*.java
-javac Client/*.java
-javac Server/*.java
+javac fr/univ_nantes/SimpleMahjong/Server/*.java
+javac fr/univ_nantes/SimpleMahjong/Client/*.java
 
 exit 0

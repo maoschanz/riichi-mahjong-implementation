@@ -1,3 +1,5 @@
+package fr.univ_nantes.SimpleMahjong.Client;
+
 import java.rmi.Naming;
 
 public class MahjongClientMain {
