@@ -3,7 +3,7 @@ import fr.univ_nantes.SimpleMahjong.Interface.MahjongInterface;
 
 import java.rmi.Naming;
 
-public class MahjongClientMain {
+public class MainMahjongClient {
 	private static final int portnum = 8090;
 	private static final String serverUri = "rmi://localhost:" + portnum + "/mahjong";
 	public static void main (String[] args) {

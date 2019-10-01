@@ -3,7 +3,7 @@ package fr.univ_nantes.SimpleMahjong.Server;
 import java.rmi.Naming;
 import java.rmi.registry.LocateRegistry;
 
-public class MahjongServerMain {
+public class MainMahjongServer {
 	private static final int portnum = 8090;
 	public static void main (String[] args) throws Exception {
 		try {
