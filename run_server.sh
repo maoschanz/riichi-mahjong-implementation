@@ -1,5 +1,6 @@
 #!/bin/bash
 
-tilix -e java fr.univ_nantes.SimpleMahjong.Server.MahjongServerMain &
+command="java fr.univ_nantes.SimpleMahjong.Server.MahjongServerMain"
+tilix -e $command &
 
 exit 0

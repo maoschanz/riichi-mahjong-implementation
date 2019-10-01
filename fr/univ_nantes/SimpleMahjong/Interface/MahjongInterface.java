@@ -4,8 +4,9 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 public interface MahjongInterface extends Remote {
-	public MahjongTuile annonceEtVol(String s) throws RemoteException;
-	public MahjongTuile pioche() throws RemoteException;
-	public int test_print(String s) throws RemoteException; // XXX à virer TODO
+	boolean registerPlayer(int playerId, String pseudo) throws RemoteException;
+	MahjongTuile annonceEtVol(String s) throws RemoteException;
+	MahjongTuile pioche() throws RemoteException;
+	int test_print(String s) throws RemoteException; // XXX à virer TODO
 }
 

@@ -6,8 +6,18 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
 public class MahjongServer extends UnicastRemoteObject implements MahjongInterface {
+	int nbPlayers = 0;
+
 	protected MahjongServer() throws RemoteException {
 		super();
+	}
+
+	public boolean registerPlayer(int playerId, String pseudo) throws RemoteException {
+		System.out.println("Requête d'un nouveau joueur (" + (this.nbPlayers+1)
+		                           + "/4): " + pseudo + " (id : " + playerId + ")");
+		// XXX le retenir ?
+		this.nbPlayers++; // FIXME certainement pas atomique
+		return this.nbPlayers < 5;
 	}
 
 	public int test_print (String s) throws RemoteException {
