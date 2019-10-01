@@ -9,13 +9,12 @@ public class MahjongServerMain {
 		try {
 
 			LocateRegistry.createRegistry(portnum);
-			MahjongServer eeeee = new MahjongServer();
 			String uri = "rmi://localhost:" + portnum + "/mahjong";
-			Naming.bind(uri, eeeee);
-			System.out.println("le serveur a démarré");
+			MahjongServer server = new MahjongServer();
+			Naming.bind(uri, server);
 
 		} catch(Exception e) {
-			System.out.println("erreur serveur : " + e);
+			System.out.println("erreur au démarrage du serveur : " + e);
 		}
 	}
 }

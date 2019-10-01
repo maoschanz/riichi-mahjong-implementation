@@ -39,25 +39,26 @@ public class MahjongClient {
 			System.out.println("Trop de joueurs sur le serveur");
 			return;
 		}
-		this.testePrint();
-		this.piocheTuile();
+		// donc là dans l'idéal il faudrait ATTENDRE QUE LE SERVEUR AIENT 4 JOUEURS !!!
+		// mdr, attendre
+		// et au terme de cette attente, le serveur nous donne une main, et désigne un vent d'est
+		// en attendant on fait comme ça mdr
+		for (int i=0; i<13; i++) {
+			this.piocheTuile();
+		}
+		System.out.println("hand = " + hand);
+
 		while(true){
 			// TODO
-		}
-	}
-
-	private void testePrint() {
-		try {
-			System.out.println("print = " + this.server.test_print("hello world"));
-		} catch (RemoteException e) {
-			System.out.println("erreur au test du client : " + e);
+			//...
 		}
 	}
 
 	private void piocheTuile() {
 		try {
 			MahjongTuile t = this.server.pioche();
-			System.out.println("pioche = " + t.toString());
+			this.hand.add(t);
+			// System.out.println("pioche = " + t.toString());
 		} catch (RemoteException e){
 			System.out.println("erreur client (pioche) : " + e);
 		}

@@ -18,6 +18,6 @@ echo "lancement des clients"
 ./run_client.sh
 ./run_client.sh
 ./run_client.sh
-./run_client.sh
+# ./run_client.sh
 
 exit 0

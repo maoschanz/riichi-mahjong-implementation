@@ -5,10 +5,12 @@ enum TypeTuile { DRAGON, VENT, KANJI, BAMBOU, ROND };
 
 public class MahjongTuile implements Serializable {
 	private int chiffre;
+	private int exemplaire;
 	private TypeTuile type;
 
-	public MahjongTuile (int chiffre, char type) {
+	public MahjongTuile (int chiffre, char type, int exemplaire) {
 		this.chiffre = chiffre;
+		this.exemplaire = exemplaire;
 		switch(type) {
 			case 'd': this.type = TypeTuile.DRAGON; break;
 			case 'v': this.type = TypeTuile.VENT; break;
