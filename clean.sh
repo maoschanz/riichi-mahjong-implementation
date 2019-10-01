@@ -1,6 +1,6 @@
 #!/bin/bash
 
-rm */*.class
+rm fr/univ_nantes/SimpleMahjong/*/*.class
 
 
 

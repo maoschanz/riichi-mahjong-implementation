@@ -4,14 +4,18 @@ import java.rmi.Naming;
 import java.rmi.registry.LocateRegistry;
 
 public class MahjongServerMain {
+	private static final int portnum = 8090;
 	public static void main (String[] args) throws Exception {
 		try {
-			LocateRegistry.createRegistry(8090);
+
+			LocateRegistry.createRegistry(portnum);
 			MahjongServer eeeee = new MahjongServer();
-			Naming.bind("rmi://localhost:8090/test_print", eeeee);
+			String uri = "rmi://localhost:" + portnum + "/test_print";
+			Naming.bind(uri, eeeee);
 			System.out.println("le serveur a démarré");
+
 		} catch(Exception e) {
-			System.out.println("erreur : " + e);
+			System.out.println("erreur serveur : " + e);
 		}
 	}
 }
