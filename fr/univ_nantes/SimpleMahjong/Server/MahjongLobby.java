@@ -1,12 +1,6 @@
 package fr.univ_nantes.SimpleMahjong.Server;
 import fr.univ_nantes.SimpleMahjong.Interface.MahjongLobbyInterface;
-import fr.univ_nantes.SimpleMahjong.Interface.MahjongTuile;
 
-// entièrement TODO
-
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.Collections;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
@@ -17,8 +11,6 @@ public class MahjongLobby extends UnicastRemoteObject implements MahjongLobbyInt
 		super();
 	}
 
-	//----------------------------------------------------------------------------------------------
-
 	public boolean registerPlayer(int playerId, String pseudo) throws RemoteException {
 		System.out.println("Requête d'un nouveau joueur (" + (this.nbPlayers+1) + "/4): "
 		                                                     + pseudo + " (id : " + playerId + ")");
@@ -26,9 +18,15 @@ public class MahjongLobby extends UnicastRemoteObject implements MahjongLobbyInt
 		boolean accepted = false;
 		try {
 			waiter.start();
+			synchronized(this){
+				notifyAll();
+			}
 			waiter.join();
 			accepted = this.nbPlayers < 5;
-		} catch (Exception e) {}
+		} catch (Exception e) {
+			System.out.println("probably a timeout or something : " + e);
+		}
+		System.out.println("Return to client with : " + accepted);
 		return accepted;
 	}
 

@@ -11,7 +11,7 @@ public class MahjongPlayer {
 	private MahjongRoundInterface server;
 	private String pseudo;
 	private int playerId;
-	private ArrayList<MahjongTuile> hand = new ArrayList<MahjongTuile>();
+	private ArrayList<AbstractMahjongTuile> hand = new ArrayList<AbstractMahjongTuile>();
 	// TODO la rivière devrait être là pour pouvoir être affichée et mise à jour
 
 	public MahjongPlayer (MahjongLobbyInterface lobby, MahjongRoundInterface server) {
@@ -66,7 +66,7 @@ public class MahjongPlayer {
 
 	private int askIntInput() {
 		Scanner keyboard = new Scanner(System.in);
-		System.out.println("\nChoisissez une tuile à jeter");
+		System.out.println("\nChoisissez une tuile à jeter : ");
 		for(int i=0; i<this.hand.size(); i++) {
 			System.out.println("[" + i + "] - " + this.hand.get(i));
 		}
@@ -84,7 +84,7 @@ public class MahjongPlayer {
 	 */
 	private void piocheTuile() {
 		try {
-			MahjongTuile t = this.server.pioche();
+			AbstractMahjongTuile t = this.server.pioche();
 			this.hand.add(t);
 			// System.out.println("pioche = " + t.toString());
 		} catch (RemoteException e){
@@ -97,7 +97,7 @@ public class MahjongPlayer {
 	 */
 	private void poseTuile(int index) {
 		try {
-			MahjongTuile t = this.hand.get(index);
+			AbstractMahjongTuile t = this.hand.get(index);
 			this.hand.remove(t);
 			this.server.pose(t);
 			// System.out.println("pose = " + t.toString());

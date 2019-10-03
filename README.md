@@ -50,4 +50,4 @@ The composition of a winning hand, as well as the method used to complete it, wi
 
 ------
 
-The readme is in english but the code and comments are plutôt en français.
+**The readme is in english but the code and comments are plutôt en français.**
