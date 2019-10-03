@@ -1,5 +1,5 @@
 package fr.univ_nantes.SimpleMahjong.Server;
-import fr.univ_nantes.SimpleMahjong.Interface.MahjongInterface;
+import fr.univ_nantes.SimpleMahjong.Interface.MahjongRoundInterface;
 import fr.univ_nantes.SimpleMahjong.Interface.MahjongTuile;
 
 import java.util.ArrayList;
@@ -8,12 +8,14 @@ import java.util.Collections;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
-public class MahjongServer extends UnicastRemoteObject implements MahjongInterface {
+import java.util.concurrent.TimeUnit;
+
+public class MahjongRoundManager extends UnicastRemoteObject implements MahjongRoundInterface {
 	private int nbPlayers = 0;
 	private LinkedList<MahjongTuile> river = new LinkedList<MahjongTuile>(); // TODO n'a pas lieu d'être ici
 	private ArrayList<MahjongTuile> muraille = new ArrayList<MahjongTuile>();
 
-	protected MahjongServer() throws RemoteException {
+	protected MahjongRoundManager() throws RemoteException {
 		super();
 		System.out.println("Le serveur a démarré.");
 		// Initialisation d'une muraille pleine
@@ -32,18 +34,6 @@ public class MahjongServer extends UnicastRemoteObject implements MahjongInterfa
 		}
 		Collections.shuffle(this.muraille);
 		// retourner un indicateur de dora TODO
-	}
-
-	public synchronized boolean registerPlayer(int playerId, String pseudo) throws RemoteException {
-		System.out.println("Requête d'un nouveau joueur (" + (this.nbPlayers+1) + "/4): "
-		                                                     + pseudo + " (id : " + playerId + ")");
-		this.nbPlayers++;
-		boolean accepted = this.nbPlayers < 5;
-		if (accepted) {
-			// TODO retenir les clients pour pouvoir les notifier ? sinon ils peuvent
-			// requêter en boucle dans un while mdr
-		}
-		return accepted;
 	}
 
 	//----------------------------------------------------------------------------------------------

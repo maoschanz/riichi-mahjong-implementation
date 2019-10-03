@@ -1,6 +1,5 @@
 package fr.univ_nantes.SimpleMahjong.Client;
-import fr.univ_nantes.SimpleMahjong.Interface.MahjongInterface;
-import fr.univ_nantes.SimpleMahjong.Interface.MahjongTuile;
+import fr.univ_nantes.SimpleMahjong.Interface.*;
 
 import java.util.Scanner;
 import java.util.Random;
@@ -8,20 +7,21 @@ import java.util.ArrayList;
 import java.rmi.RemoteException;
 
 public class MahjongPlayer {
-	private MahjongInterface server;
+	// private MahjongLobbyInterface lobby; // XXX useless to remember ?
+	private MahjongRoundInterface server;
 	private String pseudo;
 	private int playerId;
 	private ArrayList<MahjongTuile> hand = new ArrayList<MahjongTuile>();
 	// TODO la rivière devrait être là pour pouvoir être affichée et mise à jour
 
-	public MahjongPlayer (MahjongInterface server) {
+	public MahjongPlayer (MahjongLobbyInterface lobby, MahjongRoundInterface server) {
 		this.server = server;
 		this.initPseudo();
 		boolean accepted = false;
 		try {
-			accepted = this.server.registerPlayer(this.playerId, this.pseudo);
+			accepted = lobby.registerPlayer(this.playerId, this.pseudo);
 			System.out.println("Connecté : " + accepted);
-		} catch (RemoteException e){
+		} catch (Exception e){
 			System.out.println("[erreur à l'enregistrement du client] " + e);
 		}
 		if (!accepted) {

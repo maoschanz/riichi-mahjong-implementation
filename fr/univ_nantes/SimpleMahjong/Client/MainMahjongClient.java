@@ -1,5 +1,6 @@
 package fr.univ_nantes.SimpleMahjong.Client;
-import fr.univ_nantes.SimpleMahjong.Interface.MahjongInterface;
+import fr.univ_nantes.SimpleMahjong.Interface.MahjongRoundInterface;
+import fr.univ_nantes.SimpleMahjong.Interface.MahjongLobbyInterface;
 
 import java.rmi.Naming;
 
@@ -9,12 +10,14 @@ import java.rmi.Naming;
  */
 public class MainMahjongClient {
 	private static final int portnum = 8090;
-	private static final String serverUri = "rmi://localhost:" + portnum + "/mahjong";
+	private static final String lobbyUri = "rmi://localhost:" + portnum + "/lobby";
+	private static final String roundUri = "rmi://localhost:" + portnum + "/round";
 	public static void main (String[] args) {
 		try {
 
-			MahjongInterface server = (MahjongInterface)Naming.lookup(serverUri);
-			MahjongPlayer client = new MahjongPlayer(server);
+			MahjongLobbyInterface lobbyServer = (MahjongLobbyInterface)Naming.lookup(lobbyUri);
+			MahjongRoundInterface roundServer = (MahjongRoundInterface)Naming.lookup(roundUri);
+			MahjongPlayer client = new MahjongPlayer(lobbyServer, roundServer);
 
 		} catch(Exception e) {
 			System.out.println("[erreur à la création du client] " + e);

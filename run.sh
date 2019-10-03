@@ -12,6 +12,7 @@ mahjong_script_help() {
 	echo "server		start a server"
 	echo "client		start a client"
 	echo "help		display this help"
+	echo "--no-term		(as a 2nd argument) do not run the client in distinct terminal windows"
 }
 
 mahjong_run_client() {
@@ -54,6 +55,10 @@ mahjong_full_run() {
 ################################################################################
 
 arg=$1
+
+if [[ $2 = "--no-term" ]]; then
+	TERMINAL_COMMAND=""
+fi
 
 if [[ $arg = "help" ]]; then
 	mahjong_script_help
