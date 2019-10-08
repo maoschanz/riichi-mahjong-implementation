@@ -7,10 +7,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.rmi.RemoteException;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 public class MahjongPlayer {
 	// private MahjongLobbyInterface lobby; // XXX useless to remember ?
 	private MahjongRoundInterface server;
 	private String pseudo;
+	private String vent;
 	private int playerId;
 	private ArrayList<AbstractTuile> hand = new ArrayList<AbstractTuile>();
 	// TODO la rivière devrait être là pour pouvoir être affichée et mise à jour
@@ -31,10 +34,55 @@ public class MahjongPlayer {
 		while (true) { // celui là ok (on sortira par des exceptions)
 			// TODO je propose des threads qui attendent le serveur sur le modèle immonde du lobby
 			// TODO ou alors le délire des pointeurs longs mais ça je ne sais pas encore faire
+			if (true) { // if c'est mon tour
+				this.playNormal();
+			} else { // if c'est pas mon tour TODO
+				this.playAnnonce();
+			}
+			// TODO joueur suivant
+		}
+	}
+
+	private void playNormal() {
+		// 13 tuiles → on pioche → 14 donc → possibilité d'annoncer tsumo (ou kan ?), ou défausse
+		// (ou défausse avec riichi) (→ si kan, repiocher) → joueur suivant
+		int action_id = 0;
+		int tuile_index = 0;
+		this.piocheTuile();
+		Collections.sort(this.hand);
+		// XXX kan ?
+		String[] actions = {"défausse", "tsumo", "kan"};
+		this.updateUI(false, "Que faire ?");
+		action_id = this.askChoice(actions, false);
+
+		if (action_id == 0) {
+			tuile_index = this.askHandChoice();
+			System.out.println("tuile_index : " + tuile_index);
+			this.poseTuile(tuile_index);
+		} else if (action_id == 1) {
+			// fin théorique de la partie (à faire vérifier par le serveur ?)
+		} else if (action_id == 2) {
+			// XXX si on peut kan est-ce qu'on peut faire autre chose ?
+			// TODO envoyer le kan au serveur (ou aux pairs)
+			// puis piocher ???? XXX
 			this.piocheTuile();
 			Collections.sort(this.hand);
-			this.printHand2();
-			this.poseTuile(this.askIntInput());
+			this.showChoices(this.getHandAsStrings(), true, false);
+		}
+	}
+
+	private void playAnnonce() {
+		// 13 tuiles → on vole → 14 donc → possibilité d'annoncer ron, pon, kan (ou chii) → si kan,
+		// repiocher [dans le mur mort, et la dernière tuile du mur est ajoutée au mur mort ??? faut
+		// qu'il reste à 14 tuiles, et on révèle un nouvel indicateur de dora] → joueur suivant
+		int action_id = 0;
+		int tuile_index = 0;
+		String[] actions = {"pon", "kan", "chii", "ron"/*, "rien"*/};
+		this.updateUI(false, "Que faire ?");
+		action_id = this.askChoice(actions, false);
+		this.voleTuile( actions[action_id] );
+		if (action_id == 1) {
+			// repiocher ???? XXX
 		}
 	}
 
@@ -48,6 +96,7 @@ public class MahjongPlayer {
 		}
 		if (accepted) {
 			System.out.println("Connecté : " + accepted);
+			this.vent = "???????????"; // TODO
 		} else {
 			System.out.println("Trop de joueurs sur le serveur");
 		}
@@ -55,7 +104,7 @@ public class MahjongPlayer {
 	}
 
 	private void initPseudo() {
-		this.playerId = new Random().nextInt();
+		this.playerId = new Random().nextInt(); // TODO il y a des vrais UID dans java.rmi
 		Scanner keyboard = new Scanner(System.in);
 		System.out.println("Entrez votre pseudo :");
 		try {
@@ -71,25 +120,62 @@ public class MahjongPlayer {
 
 	//----------------------------------------------------------------------------------------------
 
-	private void printHand() {
-		System.out.println("\nChoisissez une tuile à jeter : ");
-		for(int i=0; i<this.hand.size(); i++) {
-			System.out.println("[" + i + "] - " + this.hand.get(i).getEmoji());
+	private void resetTerminal() {
+		System.out.print("\033[H\033[2J");
+		System.out.flush();
+	}
+
+	private void printVentContraire() {
+		System.out.println("todo"); // TODO
+	}
+
+	private void printVentDroite() {
+		System.out.println("todo"); // TODO
+	}
+
+	private void printVentGauche() {
+		System.out.println("todo"); // TODO
+	}
+
+	private int askHandChoice() {
+		this.updateUI(true, "Choisissez une tuile à jeter :");
+		return this.askIntInput();
+	}
+
+	private void showChoices(String[] values, boolean horizontal, boolean showNum) {
+		if (horizontal) {
+			String l1 = "";
+			String l2 = "";
+			for(int i=0; i < values.length; i++) {
+				l1 += "[" + values[i] + "]	";
+				l2 += "(" + i + ")	";
+			}
+			System.out.println(l1);
+			if (showNum) {
+				System.out.println(l2);
+			}
+		} else if (showNum) {
+			for(int i=0; i < values.length; i++) {
+				System.out.println("(" + i + ") - " + values[i]);
+			}
+		} else {
+			for(int i=0; i < values.length; i++) {
+				System.out.println(values[i]);
+			}
 		}
 	}
 
-	private void printHand2() {
-		System.out.println("\nChoisissez une tuile à jeter : ");
-		String out = "";
+	private int askChoice(String[] values, boolean horizontal) {
+		this.showChoices(values, horizontal, true);
+		return this.askIntInput();
+	}
+
+	private String[] getHandAsStrings() {
+		String[] handLabel = new String[this.hand.size()];
 		for(int i=0; i<this.hand.size(); i++) {
-			out += "[" + this.hand.get(i).getEmoji() + "]	";
+			handLabel[i] = this.hand.get(i).getEmoji();
 		}
-		System.out.println(out);
-		out = "";
-		for(int i=0; i<this.hand.size(); i++) {
-			out += "(" + i + ")	";
-		}
-		System.out.println(out);
+		return handLabel;
 	}
 
 	private int askIntInput() {
@@ -99,6 +185,17 @@ public class MahjongPlayer {
 		} catch (Exception e) {
 			return this.askIntInput(); // honteux XXX
 		}
+	}
+
+	private void updateUI(boolean withChoice, String prompt) {
+		this.resetTerminal();
+		System.out.println("[" + this.pseudo + " - " + this.vent + "]");
+		System.out.println("[Joueur courant : ?????]");
+		this.printVentContraire();
+		this.printVentDroite();
+		this.printVentGauche();
+		this.showChoices(this.getHandAsStrings(), true, withChoice);
+		System.out.println("\n" + prompt);
 	}
 
 	//----------------------------------------------------------------------------------------------
@@ -124,11 +221,27 @@ public class MahjongPlayer {
 			AbstractTuile t = this.hand.get(index);
 			this.hand.remove(t);
 			this.server.pose(t);
-			// System.out.println("pose = " + t.toString());
+			System.out.println("pose = " + t.toString());
 		} catch (RemoteException e){
 			System.out.println("[erreur client (pose)] " + e);
 		}
 	}
 
+	/*
+	 * TODO pas besoin de faire appel au serveur pour ça normalement
+	 */
+	private void voleTuile(String annonce) {
+		try {
+			AbstractTuile t = this.server.annonceEtVol(annonce);
+			System.out.println("vol = " + t.toString());
+		} catch (RemoteException e){
+			System.out.println("[erreur client (vol, 1)] " + e);
+		} catch (Exception e){
+			System.out.println("[erreur client (vol, 2)] " + e);
+		}
+	}
+
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 

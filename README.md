@@ -19,7 +19,7 @@ most rules concerning points and scores are not implemented, since they are bori
 
 Complete rules: [en](https://en.wikipedia.org/wiki/Japanese_Mahjong), [fr](https://fr.wikipedia.org/wiki/R%C3%A8gles_du_Mah-jong_%28Riichi%29)
 
-[See also](http://arcturus.su/wiki/List_of_terminology_translations)
+See also [this](http://arcturus.su/wiki/List_of_terminology_translations) or [this](http://www.chuuren.fr/wiki/)
 
 ### Basic rules
 

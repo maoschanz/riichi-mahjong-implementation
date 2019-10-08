@@ -9,7 +9,6 @@ public class MainMahjongServer {
 	private static final String roundUri = "rmi://localhost:" + portnum + "/round";
 	public static void main (String[] args) throws Exception {
 		try {
-
 			LocateRegistry.createRegistry(portnum);
 
 			MahjongLobby lobby = new MahjongLobby();
