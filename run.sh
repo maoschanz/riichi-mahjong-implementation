@@ -32,9 +32,16 @@ mahjong_clean() {
 }
 
 mahjong_compile() {
-	javac fr/univ_nantes/SimpleMahjong/Interface/*.java
-	javac fr/univ_nantes/SimpleMahjong/Server/*.java
-	javac fr/univ_nantes/SimpleMahjong/Client/*.java
+	mahjong_compile_module "Interface"
+	mahjong_compile_module "Server"
+	mahjong_compile_module "Client"
+}
+
+mahjong_compile_module() {
+	javac fr/univ_nantes/SimpleMahjong/$1/*.java
+	if [ $? -gt 0 ]; then
+		exit $?
+	fi
 }
 
 mahjong_full_run() {

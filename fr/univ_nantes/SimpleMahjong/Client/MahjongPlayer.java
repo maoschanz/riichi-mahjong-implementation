@@ -17,10 +17,12 @@ public class MahjongPlayer {
 	private int playerId;
 	private ArrayList<AbstractTuile> hand = new ArrayList<AbstractTuile>();
 	// TODO la rivière devrait être là pour pouvoir être affichée et mise à jour
+	private ArrayList<ArrayList<AbstractTuile>> river = new ArrayList<ArrayList<AbstractTuile>>();
 
 	public MahjongPlayer (MahjongLobbyInterface lobby, MahjongRoundInterface server) {
 		this.server = server;
 		this.initPseudo();
+		this.initRiver();
 		if (!this.tryConnection(lobby)) { return; }
 
 		// le serveur devrait désigner les vents, et en particulier un vent d'est
@@ -42,6 +44,49 @@ public class MahjongPlayer {
 			// TODO joueur suivant
 		}
 	}
+
+	//----------------------------------------------------------------------------------------------
+
+	private boolean tryConnection(MahjongLobbyInterface lobby) {
+		boolean accepted = false;
+		try {
+			System.out.println("En attente des autres joueurs…");
+			accepted = lobby.registerPlayer(this.playerId, this.pseudo);
+		} catch (Exception e){
+			System.out.println("[erreur à l'enregistrement du client] " + e);
+		}
+		if (accepted) {
+			System.out.println("Connecté : " + accepted);
+			this.vent = "this.vent"; // TODO
+		} else {
+			System.out.println("Trop de joueurs sur le serveur");
+		}
+		return accepted;
+	}
+
+	private void initPseudo() {
+		this.playerId = new Random().nextInt(); // TODO il y a des vrais UID dans java.rmi
+		Scanner keyboard = new Scanner(System.in);
+		System.out.println("Entrez votre pseudo :");
+		try {
+			this.pseudo = keyboard.nextLine();
+			if (this.pseudo.length() < 1) {
+				this.pseudo = "Joueur n°" + this.playerId;
+			}
+		} catch (Exception e) {
+			this.pseudo = "Joueur n°" + this.playerId;
+		}
+		// System.out.println(this.pseudo + ' ' + this.playerId);
+	}
+
+	private void initRiver() {
+		this.river.add(new ArrayList<AbstractTuile>());
+		this.river.add(new ArrayList<AbstractTuile>());
+		this.river.add(new ArrayList<AbstractTuile>());
+		this.river.add(new ArrayList<AbstractTuile>());
+	}
+
+	//----------------------------------------------------------------------------------------------
 
 	private void playNormal() {
 		// 13 tuiles → on pioche → 14 donc → possibilité d'annoncer tsumo (ou kan ?), ou défausse
@@ -67,7 +112,7 @@ public class MahjongPlayer {
 			// puis piocher ???? XXX
 			this.piocheTuile();
 			Collections.sort(this.hand);
-			this.showChoices(this.getHandAsStrings(), true, false);
+			this.showChoices(this.getEmojiStrings(this.hand), true, false);
 		}
 	}
 
@@ -86,38 +131,6 @@ public class MahjongPlayer {
 		}
 	}
 
-	private boolean tryConnection(MahjongLobbyInterface lobby) {
-		boolean accepted = false;
-		try {
-			System.out.println("En attente des autres joueurs…");
-			accepted = lobby.registerPlayer(this.playerId, this.pseudo);
-		} catch (Exception e){
-			System.out.println("[erreur à l'enregistrement du client] " + e);
-		}
-		if (accepted) {
-			System.out.println("Connecté : " + accepted);
-			this.vent = "???????????"; // TODO
-		} else {
-			System.out.println("Trop de joueurs sur le serveur");
-		}
-		return accepted;
-	}
-
-	private void initPseudo() {
-		this.playerId = new Random().nextInt(); // TODO il y a des vrais UID dans java.rmi
-		Scanner keyboard = new Scanner(System.in);
-		System.out.println("Entrez votre pseudo :");
-		try {
-			this.pseudo = keyboard.nextLine();
-			if (this.pseudo.length() < 1) {
-				this.pseudo = "Joueur n°" + this.playerId;
-			}
-		} catch (Exception e) {
-			this.pseudo = "Joueur n°" + this.playerId;
-		}
-		// System.out.println(this.pseudo + ' ' + this.playerId);
-	}
-
 	//----------------------------------------------------------------------------------------------
 
 	private void resetTerminal() {
@@ -125,16 +138,33 @@ public class MahjongPlayer {
 		System.out.flush();
 	}
 
-	private void printVentContraire() {
-		System.out.println("todo"); // TODO
+	private void printMurMort() {
+		String mur = "▉▉▉▉▉▉▉"; // TODO
+		System.out.println("Indicateurs de dora : " + mur);
 	}
 
-	private void printVentDroite() {
-		System.out.println("todo"); // TODO
-	}
+	private void printBoard() {
+		// TODO TODO TODO TODO TODO
+		String annonces_opp = "[pon/kan/chii du vent opposé]";
+		System.out.println(annonces_opp + "[symbole du vent opposé]");
+		String[] river_opp = this.getEmojiStrings(this.river.get(3));
+		System.out.println(river_opp + "\n");
 
-	private void printVentGauche() {
-		System.out.println("todo"); // TODO
+		String annonces_drt = "[pon/kan/chii du vent droite]";
+		System.out.println(annonces_drt + "[symbole du vent droite]");
+		String[] river_drt = this.getEmojiStrings(this.river.get(2));
+		System.out.println(river_drt + "\n");
+
+		String annonces_gch = "[pon/kan/chii du vent gauche]";
+		System.out.println(annonces_gch + "[symbole du vent gauche]");
+		String[] river_gch = this.getEmojiStrings(this.river.get(1));
+		System.out.println(river_gch + "\n");
+		//String.substring(index1, index2) pour afficher ça mieux ? ou faire tuile par tuile
+
+		String annonces_self = "[pon/kan/chii de nous]";
+		System.out.println(annonces_self + " " + this.vent);
+		String[] river_self = this.getEmojiStrings(this.river.get(0));
+		System.out.println(river_self + "\n");
 	}
 
 	private int askHandChoice() {
@@ -170,10 +200,10 @@ public class MahjongPlayer {
 		return this.askIntInput();
 	}
 
-	private String[] getHandAsStrings() {
-		String[] handLabel = new String[this.hand.size()];
-		for(int i=0; i<this.hand.size(); i++) {
-			handLabel[i] = this.hand.get(i).getEmoji();
+	private String[] getEmojiStrings(ArrayList<AbstractTuile> alist) {
+		String[] handLabel = new String[alist.size()];
+		for(int i=0; i < alist.size(); i++) {
+			handLabel[i] = alist.get(i).getEmoji();
 		}
 		return handLabel;
 	}
@@ -191,10 +221,9 @@ public class MahjongPlayer {
 		this.resetTerminal();
 		System.out.println("[" + this.pseudo + " - " + this.vent + "]");
 		System.out.println("[Joueur courant : ?????]");
-		this.printVentContraire();
-		this.printVentDroite();
-		this.printVentGauche();
-		this.showChoices(this.getHandAsStrings(), true, withChoice);
+		this.printMurMort();
+		this.printBoard();
+		this.showChoices(this.getEmojiStrings(this.hand), true, withChoice);
 		System.out.println("\n" + prompt);
 	}
 

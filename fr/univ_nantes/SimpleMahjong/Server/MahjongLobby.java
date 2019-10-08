@@ -3,9 +3,11 @@ import fr.univ_nantes.SimpleMahjong.Interface.MahjongLobbyInterface;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 
 public class MahjongLobby extends UnicastRemoteObject implements MahjongLobbyInterface {
 	protected int nbPlayers = 0; // XXX private + faire les accesseurs
+	private ArrayList ids = new ArrayList();
 
 	protected MahjongLobby() throws RemoteException {
 		super();
@@ -23,6 +25,9 @@ public class MahjongLobby extends UnicastRemoteObject implements MahjongLobbyInt
 			}
 			waiter.join();
 			accepted = this.nbPlayers < 5;
+			if (accepted) { // atomicité ?
+				this.ids.add(playerId);
+			}
 		} catch (Exception e) {
 			System.out.println("probably a timeout or something : " + e);
 		}
@@ -35,7 +40,12 @@ public class MahjongLobby extends UnicastRemoteObject implements MahjongLobbyInt
 	}
 
 	public synchronized boolean isRegistered(int playerId) throws RemoteException {
-		return true;
+		for(int i=0; i<this.ids.size(); i++) {
+			if (this.ids.get(i).equals(playerId)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

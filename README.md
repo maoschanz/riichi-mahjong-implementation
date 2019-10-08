@@ -25,9 +25,10 @@ See also [this](http://arcturus.su/wiki/List_of_terminology_translations) or [th
 
 - Tiles are arranged in a square wall, in the middle of it is the *river*.
 - Each player is associated with a cardinal point, the first to play is East, then South, West, Nord, ...
-- The goal of each player is to complete a valid hand:
-	- [3 similar tiles OR a sequence of 3 following tiles] × 4 + [a pair]
-	- [4 similar tiles] + [3 similar tiles OR a sequence of 3 following tiles] × 3 + [a pair]
+- The goal of each player is to complete a valid hand: 4 combinations + 1 pair. A combination can be:
+	- 3 similar tiles
+	- 4 similar tiles
+	- a sequence of 3 following tiles
 - When it's their turn, a player draw a tile from the wall, and discard a tile in the river.
 - When a tile is discarded, any player can interrupt the game by announcing:
 	- *pon* and "steal" the last discarded tile to complete a set of 3 similar tiles
@@ -36,6 +37,8 @@ See also [this](http://arcturus.su/wiki/List_of_terminology_translations) or [th
 - When the opponent at your left discard a tile, it's possible to announce *chii* to "steal" it to complete a sequence of 3 tiles
 - When the hand is completed by drawing in the wall, the victory is announced by *tsumo*
 - When a valid hand is completed, the round ends and points are distributed from the loosers to the winner according to incredibly complex criteria. The next round can then start.
+
+<!-- https://www.reddit.com/r/Mahjong/comments/2874jb/stealing_what_are_my_options/ -->
 
 ### Points
 
