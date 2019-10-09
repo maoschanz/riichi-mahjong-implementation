@@ -9,12 +9,12 @@ import java.rmi.server.UnicastRemoteObject;
 
 import java.util.concurrent.TimeUnit;
 
-public class MahjongRoundManager extends UnicastRemoteObject implements MahjongRoundInterface {
+public class MahjongTableManager extends UnicastRemoteObject implements MahjongTableInterface {
 	private int nbPlayers = 0;
 	private LinkedList<AbstractTuile> river = new LinkedList<AbstractTuile>(); // TODO n'a pas lieu d'être ici
 	private ArrayList<AbstractTuile> muraille = new ArrayList<AbstractTuile>();
 
-	protected MahjongRoundManager() throws RemoteException {
+	protected MahjongTableManager() throws RemoteException {
 		super();
 		System.out.println("Le serveur a démarré.");
 		// Initialisation d'une muraille pleine

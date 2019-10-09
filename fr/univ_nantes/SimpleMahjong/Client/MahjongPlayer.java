@@ -11,7 +11,7 @@ import java.rmi.RemoteException;
 
 public class MahjongPlayer {
 	// private MahjongLobbyInterface lobby; // XXX useless to remember ?
-	private MahjongRoundInterface server;
+	private MahjongTableInterface server;
 	private String pseudo;
 	private String vent;
 	private int playerId;
@@ -19,49 +19,9 @@ public class MahjongPlayer {
 	// TODO la rivière devrait être là pour pouvoir être affichée et mise à jour
 	private ArrayList<ArrayList<AbstractTuile>> river = new ArrayList<ArrayList<AbstractTuile>>();
 
-	public MahjongPlayer (MahjongLobbyInterface lobby, MahjongRoundInterface server) {
-		this.server = server;
+	public MahjongPlayer () {
 		this.initPseudo();
 		this.initRiver();
-		if (!this.tryConnection(lobby)) { return; }
-
-		// le serveur devrait désigner les vents, et en particulier un vent d'est
-		// en attendant on fait comme ça mdr XXX
-		for (int i=0; i<13; i++) {
-			this.piocheTuile();
-		}
-		System.out.println("hand = " + hand);
-		Collections.sort(this.hand);
-
-		while (true) { // celui là ok (on sortira par des exceptions)
-			// TODO je propose des threads qui attendent le serveur sur le modèle immonde du lobby
-			// TODO ou alors le délire des pointeurs longs mais ça je ne sais pas encore faire
-			if (true) { // if c'est mon tour
-				this.playNormal();
-			} else { // if c'est pas mon tour TODO
-				this.playAnnonce();
-			}
-			// TODO joueur suivant
-		}
-	}
-
-	//----------------------------------------------------------------------------------------------
-
-	private boolean tryConnection(MahjongLobbyInterface lobby) {
-		boolean accepted = false;
-		try {
-			System.out.println("En attente des autres joueurs…");
-			accepted = lobby.registerPlayer(this.playerId, this.pseudo);
-		} catch (Exception e){
-			System.out.println("[erreur à l'enregistrement du client] " + e);
-		}
-		if (accepted) {
-			System.out.println("Connecté : " + accepted);
-			this.vent = "this.vent"; // TODO
-		} else {
-			System.out.println("Trop de joueurs sur le serveur");
-		}
-		return accepted;
 	}
 
 	private void initPseudo() {
@@ -84,6 +44,53 @@ public class MahjongPlayer {
 		this.river.add(new ArrayList<AbstractTuile>());
 		this.river.add(new ArrayList<AbstractTuile>());
 		this.river.add(new ArrayList<AbstractTuile>());
+	}
+
+	//----------------------------------------------------------------------------------------------
+
+	public void setServerTable(MahjongTableInterface server) {
+		this.server = server;
+		// et c'est tout ?
+	}
+
+	public String reachServer(MahjongLobbyInterface lobby) {
+		String tableId = "";
+		try {
+			System.out.println("En attente des autres joueurs…");
+			tableId = lobby.registerPlayer(this.playerId, this.pseudo);
+		} catch (Exception e){
+			System.out.println("[erreur à l'enregistrement du client] " + e);
+		}
+		if (!tableId.equals("")) {
+			System.out.println("Connecté : " + tableId);
+			this.vent = "this.vent"; // TODO
+		} else {
+			System.out.println("Trop de joueurs sur le serveur");
+			// TODO throw new Exception("Trop de joueurs sur le serveur");
+		}
+		return tableId;
+	}
+
+	public void startGame() {
+		// le serveur doit désigner les vents, et en particulier un vent d'est, pour décider qui
+		// pioche une de plus, et qui commence. TODO
+		// en attendant on fait comme ça mdr XXX
+		for (int i=0; i<13; i++) {
+			this.piocheTuile();
+		}
+		System.out.println("hand = " + this.hand);
+		Collections.sort(this.hand);
+
+		while (true) { // celui là ok (on sortira par des exceptions)
+			// TODO je propose des threads qui attendent le serveur sur le modèle immonde du lobby
+			// TODO ou alors le délire des pointeurs longs mais ça je ne sais pas encore faire
+			if (true) { // if c'est mon tour
+				this.playNormal();
+			} else { // if c'est pas mon tour TODO
+				this.playAnnonce();
+			}
+			// TODO joueur suivant
+		}
 	}
 
 	//----------------------------------------------------------------------------------------------

@@ -8,7 +8,7 @@ import java.rmi.RemoteException;
  * ses requêtes.
  */
 public interface MahjongLobbyInterface extends Remote {
-	boolean registerPlayer(int playerId, String pseudo) throws RemoteException;
+	String registerPlayer(int playerId, String pseudo) throws RemoteException;
 	boolean unregisterPlayer(int playerId) throws RemoteException;
 	boolean isRegistered(int playerId) throws RemoteException;
 }
