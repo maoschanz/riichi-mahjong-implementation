@@ -11,12 +11,15 @@ import java.util.concurrent.TimeUnit;
 
 public class MahjongTableManager extends UnicastRemoteObject implements MahjongTableInterface {
 	private int nbPlayers = 0;
+	private MahjongPlayerInterface[] players;
 	private LinkedList<AbstractTuile> river = new LinkedList<AbstractTuile>(); // TODO n'a pas lieu d'être ici
 	private ArrayList<AbstractTuile> muraille = new ArrayList<AbstractTuile>();
 
-	protected MahjongTableManager() throws RemoteException {
+	protected MahjongTableManager(MahjongPlayerInterface[] players) throws RemoteException {
 		super();
-		System.out.println("Le serveur a démarré.");
+		this.players = players;
+		System.out.println("[démarrage du gestionnaire de table]");
+
 		// Initialisation d'une muraille pleine
 		for (int h=0; h<4; h++) {
 			for (int i=1; i<10; i++) {
@@ -33,6 +36,22 @@ public class MahjongTableManager extends UnicastRemoteObject implements MahjongT
 		}
 		Collections.shuffle(this.muraille);
 		// retourner un indicateur de dora TODO
+
+		String[] VENTS= {"東", "南", "西", "北"}; // TODO passer des TuileVent plutôt
+		try {
+			for (int i=0; i<4; i++) {
+				this.players[i].initTable(this);
+				this.players[i].initHand(VENTS[i]);
+				for (int h=0; h<4; h++) {
+					if (h != i) {
+						this.players[i].discoverOther(this.players[h], VENTS[h], h);
+					}
+				}
+				this.players[i].startGame(VENTS[i].equals("東"));
+			}
+		} catch(Exception e) {
+			System.out.println("[erreur à l'initialisation de la table] " + e);
+		}
 	}
 
 	//----------------------------------------------------------------------------------------------

@@ -8,7 +8,6 @@ import java.rmi.RemoteException;
  * ses requêtes.
  */
 public interface MahjongTableInterface extends Remote {
-	// boolean registerPlayer(int playerId, String pseudo) throws Exception; // TODO
 	AbstractTuile annonceEtVol(String s) throws Exception; // XXX ?
 	AbstractTuile pioche() throws RemoteException;
 	void pose(AbstractTuile t) throws RemoteException; // XXX ?

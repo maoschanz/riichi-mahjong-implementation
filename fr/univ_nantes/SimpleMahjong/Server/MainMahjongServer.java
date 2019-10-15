@@ -15,10 +15,6 @@ public class MainMahjongServer {
 			MahjongLobby lobby = new MahjongLobby();
 			Naming.bind(lobbyUri, lobby);
 
-			MahjongTableManager server = new MahjongTableManager();
-			Naming.bind(roundUri + "0", server); // XXX
-			// TODO support several servers for more than 4 clients
-
 		} catch(Exception e) {
 			System.out.println("[erreur au démarrage du serveur] " + e);
 		}

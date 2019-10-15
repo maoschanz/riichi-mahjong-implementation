@@ -4,12 +4,10 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 /*
- * Interface implémentée par le serveur, et connue par le client qui l'utilisera pour faire toutes
- * ses requêtes.
+ * Interface implémentée par le serveur, et connue par le client qui l'utilisera pour faire ses
+ * requêtes de connexion.
  */
 public interface MahjongLobbyInterface extends Remote {
-	String registerPlayer(int playerId, String pseudo) throws RemoteException;
-	boolean unregisterPlayer(int playerId) throws RemoteException;
-	boolean isRegistered(int playerId) throws RemoteException;
+	void registerPlayer(MahjongPlayerInterface player, String pseudo) throws RemoteException;
 }
 

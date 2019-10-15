@@ -6,90 +6,77 @@ import java.util.Random;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-public class MahjongPlayer {
-	// private MahjongLobbyInterface lobby; // XXX useless to remember ?
+public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerInterface {
 	private MahjongTableInterface server;
 	private String pseudo;
-	private String vent;
-	private int playerId;
+	private String[] vents = new String[4];
 	private ArrayList<AbstractTuile> hand = new ArrayList<AbstractTuile>();
-	// TODO la rivière devrait être là pour pouvoir être affichée et mise à jour
-	private ArrayList<ArrayList<AbstractTuile>> river = new ArrayList<ArrayList<AbstractTuile>>();
+	private ArrayList<AbstractTuile> river = new ArrayList<AbstractTuile>();
+	private ArrayList<AbstractTuile> combiShown = new ArrayList<AbstractTuile>();
+	private MahjongPlayerInterface[] autres = new MahjongPlayerInterface[4];
 
-	public MahjongPlayer () {
+	public MahjongPlayer() throws RemoteException {
 		this.initPseudo();
-		this.initRiver();
 	}
 
 	private void initPseudo() {
-		this.playerId = new Random().nextInt(); // TODO il y a des vrais UID dans java.rmi
 		Scanner keyboard = new Scanner(System.in);
 		System.out.println("Entrez votre pseudo :");
 		try {
 			this.pseudo = keyboard.nextLine();
 			if (this.pseudo.length() < 1) {
-				this.pseudo = "Joueur n°" + this.playerId;
+				throw new Exception("Pseudo trop court");
 			}
 		} catch (Exception e) {
-			this.pseudo = "Joueur n°" + this.playerId;
+			this.pseudo = "Joueur n°" + new Random().nextInt();
 		}
-		// System.out.println(this.pseudo + ' ' + this.playerId);
-	}
-
-	private void initRiver() {
-		this.river.add(new ArrayList<AbstractTuile>());
-		this.river.add(new ArrayList<AbstractTuile>());
-		this.river.add(new ArrayList<AbstractTuile>());
-		this.river.add(new ArrayList<AbstractTuile>());
 	}
 
 	//----------------------------------------------------------------------------------------------
 
-	public void setServerTable(MahjongTableInterface server) {
-		this.server = server;
-		// et c'est tout ?
+	public void initTable(MahjongTableInterface table) throws RemoteException {
+		this.server = table;
 	}
 
-	public String reachServer(MahjongLobbyInterface lobby) {
-		String tableId = "";
-		try {
-			System.out.println("En attente des autres joueurs…");
-			tableId = lobby.registerPlayer(this.playerId, this.pseudo);
-		} catch (Exception e){
-			System.out.println("[erreur à l'enregistrement du client] " + e);
-		}
-		if (!tableId.equals("")) {
-			System.out.println("Connecté : " + tableId);
-			this.vent = "this.vent"; // TODO
-		} else {
-			System.out.println("Trop de joueurs sur le serveur");
-			// TODO throw new Exception("Trop de joueurs sur le serveur");
-		}
-		return tableId;
+	public void discoverOther(MahjongPlayerInterface other, String vent, int index) throws RemoteException {
+		this.autres[index] = other; // XXX
+		this.vents[index] = vent; // XXX
 	}
 
-	public void startGame() {
-		// le serveur doit désigner les vents, et en particulier un vent d'est, pour décider qui
-		// pioche une de plus, et qui commence. TODO
-		// en attendant on fait comme ça mdr XXX
+	public void initHand(String vent) throws RemoteException {
+		this.vents[3] = vent;
+		System.out.println("vent = " + vent);
 		for (int i=0; i<13; i++) {
+			this.piocheTuile();
+		}
+		if (vent.equals("東")) {
 			this.piocheTuile();
 		}
 		System.out.println("hand = " + this.hand);
 		Collections.sort(this.hand);
+	}
 
-		while (true) { // celui là ok (on sortira par des exceptions)
-			// TODO je propose des threads qui attendent le serveur sur le modèle immonde du lobby
-			// TODO ou alors le délire des pointeurs longs mais ça je ne sais pas encore faire
-			if (true) { // if c'est mon tour
-				this.playNormal();
-			} else { // if c'est pas mon tour TODO
-				this.playAnnonce();
-			}
-			// TODO joueur suivant
+	public boolean reachServer(MahjongLobbyInterface lobby) {
+		try {
+			System.out.println("En attente des autres joueurs…");
+			lobby.registerPlayer(this, this.pseudo);
+		} catch (Exception e){
+			System.out.println("[erreur à l'enregistrement du client] " + e);
+		}
+		return true;
+	}
+
+	public void startGame(boolean me) throws RemoteException {
+		System.out.println("[startGame] " + me);
+		if (me) { // if c'est mon tour
+			this.playNormal();
+			// TODO appeler le startGame du vent suivant
+		// } else { // if c'est pas mon tour TODO
+		// 	this.playAnnonce(); // FIXME lui il existe en permanence dans un autre thread
 		}
 	}
 
@@ -152,26 +139,26 @@ public class MahjongPlayer {
 
 	private void printBoard() {
 		// TODO TODO TODO TODO TODO
-		String annonces_opp = "[pon/kan/chii du vent opposé]";
-		System.out.println(annonces_opp + "[symbole du vent opposé]");
-		String[] river_opp = this.getEmojiStrings(this.river.get(3));
-		System.out.println(river_opp + "\n");
+		// String annonces_opp = "[pon/kan/chii du vent opposé]";
+		// System.out.println(annonces_opp + "[symbole du vent opposé]");
+		// String[] river_opp = this.getEmojiStrings(this.river.get(3));
+		// System.out.println(river_opp + "\n");
 
-		String annonces_drt = "[pon/kan/chii du vent droite]";
-		System.out.println(annonces_drt + "[symbole du vent droite]");
-		String[] river_drt = this.getEmojiStrings(this.river.get(2));
-		System.out.println(river_drt + "\n");
+		// String annonces_drt = "[pon/kan/chii du vent droite]";
+		// System.out.println(annonces_drt + "[symbole du vent droite]");
+		// String[] river_drt = this.getEmojiStrings(this.river.get(2));
+		// System.out.println(river_drt + "\n");
 
-		String annonces_gch = "[pon/kan/chii du vent gauche]";
-		System.out.println(annonces_gch + "[symbole du vent gauche]");
-		String[] river_gch = this.getEmojiStrings(this.river.get(1));
-		System.out.println(river_gch + "\n");
+		// String annonces_gch = "[pon/kan/chii du vent gauche]";
+		// System.out.println(annonces_gch + "[symbole du vent gauche]");
+		// String[] river_gch = this.getEmojiStrings(this.river.get(1));
+		// System.out.println(river_gch + "\n");
 		//String.substring(index1, index2) pour afficher ça mieux ? ou faire tuile par tuile
 
-		String annonces_self = "[pon/kan/chii de nous]";
-		System.out.println(annonces_self + " " + this.vent);
-		String[] river_self = this.getEmojiStrings(this.river.get(0));
-		System.out.println(river_self + "\n");
+		// String annonces_self = "[pon/kan/chii de nous]";
+		// System.out.println(annonces_self + " " + this.vent);
+		// String[] river_self = this.getEmojiStrings(this.river.get(0));
+		// System.out.println(river_self + "\n");
 	}
 
 	private int askHandChoice() {
@@ -226,12 +213,12 @@ public class MahjongPlayer {
 
 	private void updateUI(boolean withChoice, String prompt) {
 		this.resetTerminal();
-		System.out.println("[" + this.pseudo + " - " + this.vent + "]");
+		System.out.println("[" + this.pseudo + " - " + this.vents[3] + "]");
 		System.out.println("[Joueur courant : ?????]");
 		this.printMurMort();
 		this.printBoard();
-		this.showChoices(this.getEmojiStrings(this.hand), true, withChoice);
-		System.out.println("\n" + prompt);
+		// this.showChoices(this.getEmojiStrings(this.hand), true, withChoice);
+		// System.out.println("\n" + prompt);
 	}
 
 	//----------------------------------------------------------------------------------------------
