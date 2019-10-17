@@ -1,10 +1,10 @@
-package fr.univ_nantes.SimpleMahjong.Interface;
+package fr.univ_nantes.SimpleMahjong.Tuile;
 
 public class TuileVent extends AbstractTuileHonneur {
 	public TuileVent (int chiffre, int exemplaire) {
 		super(exemplaire, chiffre);
 		this.sortId = 40 + this.chiffre;
-		switch(this.chiffre) {
+		switch (this.chiffre) {
 			case 0:
 				this.name = "Vent d'Est";
 				this.label = "東";

@@ -1,4 +1,4 @@
-package fr.univ_nantes.SimpleMahjong.Interface;
+package fr.univ_nantes.SimpleMahjong.Tuile;
 import java.io.Serializable;
 
 public abstract class AbstractTuile implements Comparable, Serializable {

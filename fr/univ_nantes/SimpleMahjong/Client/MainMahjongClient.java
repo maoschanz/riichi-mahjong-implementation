@@ -1,5 +1,4 @@
 package fr.univ_nantes.SimpleMahjong.Client;
-import fr.univ_nantes.SimpleMahjong.Interface.MahjongTableInterface;
 import fr.univ_nantes.SimpleMahjong.Interface.MahjongLobbyInterface;
 
 import java.rmi.Naming;
@@ -15,8 +14,7 @@ public class MainMahjongClient {
 	public static void main (String[] args) {
 		try {
 			MahjongLobbyInterface lobbyServer = (MahjongLobbyInterface)Naming.lookup(lobbyUri);
-			MahjongPlayer client = new MahjongPlayer();
-			client.reachServer(lobbyServer);
+			MahjongPlayer client = new MahjongPlayer(lobbyServer);
 		} catch(Exception e) {
 			System.out.println("[erreur à la création du client] " + e);
 		}

@@ -1,4 +1,4 @@
-package fr.univ_nantes.SimpleMahjong.Interface;
+package fr.univ_nantes.SimpleMahjong.Tuile;
 
 public class TuileDragon extends AbstractTuileHonneur {
 	public TuileDragon (int chiffre, int exemplaire) {

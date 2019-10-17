@@ -1,4 +1,4 @@
-package fr.univ_nantes.SimpleMahjong.Interface;
+package fr.univ_nantes.SimpleMahjong.Tuile;
 
 enum TypeTuile { KANJI, BAMBOU, ROND };
 

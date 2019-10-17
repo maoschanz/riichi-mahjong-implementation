@@ -1,4 +1,5 @@
 package fr.univ_nantes.SimpleMahjong.Interface;
+import fr.univ_nantes.SimpleMahjong.Tuile.AbstractTuile;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -8,8 +9,7 @@ import java.rmi.RemoteException;
  * ses requêtes.
  */
 public interface MahjongTableInterface extends Remote {
-	AbstractTuile annonceEtVol(String s) throws Exception; // XXX ?
 	AbstractTuile pioche() throws RemoteException;
-	void pose(AbstractTuile t) throws RemoteException; // XXX ?
+	// void gagne(boolean nonNul) throws RemoteException; // TODO
 }
 

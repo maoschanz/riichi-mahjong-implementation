@@ -32,6 +32,7 @@ mahjong_clean() {
 }
 
 mahjong_compile() {
+	mahjong_compile_module "Tuile"
 	mahjong_compile_module "Interface"
 	mahjong_compile_module "Server"
 	mahjong_compile_module "Client"

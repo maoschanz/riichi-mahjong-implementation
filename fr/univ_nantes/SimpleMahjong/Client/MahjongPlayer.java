@@ -1,5 +1,6 @@
 package fr.univ_nantes.SimpleMahjong.Client;
 import fr.univ_nantes.SimpleMahjong.Interface.*;
+import fr.univ_nantes.SimpleMahjong.Tuile.*;
 
 import java.util.Scanner;
 import java.util.Random;
@@ -13,17 +14,15 @@ import java.rmi.server.UnicastRemoteObject;
 public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerInterface {
 	private MahjongTableInterface server;
 	private String pseudo;
-	private String[] vents = new String[4];
+	private String vent;
 	private ArrayList<AbstractTuile> hand = new ArrayList<AbstractTuile>();
 	private ArrayList<AbstractTuile> river = new ArrayList<AbstractTuile>();
 	private ArrayList<AbstractTuile> combiShown = new ArrayList<AbstractTuile>();
-	private MahjongPlayerInterface[] autres = new MahjongPlayerInterface[4];
+	private MahjongPlayerInterface playerDroite; // shimocha
+	private MahjongPlayerInterface playerFace; // toimen
+	private MahjongPlayerInterface playerGauche; // kamicha
 
-	public MahjongPlayer() throws RemoteException {
-		this.initPseudo();
-	}
-
-	private void initPseudo() {
+	public MahjongPlayer(MahjongLobbyInterface lobby) throws RemoteException {
 		Scanner keyboard = new Scanner(System.in);
 		System.out.println("Entrez votre pseudo :");
 		try {
@@ -34,21 +33,22 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		} catch (Exception e) {
 			this.pseudo = "Joueur n°" + new Random().nextInt();
 		}
+
+		try {
+			System.out.println("En attente des autres joueurs…");
+			lobby.registerPlayer(this, this.pseudo);
+		} catch (Exception e){
+			System.out.println("[erreur à l'enregistrement du client] " + e);
+		}
 	}
 
-	//----------------------------------------------------------------------------------------------
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// Interactions with the server and the other players //////////////////////////////////////////
 
-	public void initTable(MahjongTableInterface table) throws RemoteException {
-		this.server = table;
-	}
-
-	public void discoverOther(MahjongPlayerInterface other, String vent, int index) throws RemoteException {
-		this.autres[index] = other; // XXX
-		this.vents[index] = vent; // XXX
-	}
+	// Initial interactions
 
 	public void initHand(String vent) throws RemoteException {
-		this.vents[3] = vent;
+		this.vent = vent;
 		System.out.println("vent = " + vent);
 		for (int i=0; i<13; i++) {
 			this.piocheTuile();
@@ -60,27 +60,83 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		Collections.sort(this.hand);
 	}
 
-	public boolean reachServer(MahjongLobbyInterface lobby) {
-		try {
-			System.out.println("En attente des autres joueurs…");
-			lobby.registerPlayer(this, this.pseudo);
-		} catch (Exception e){
-			System.out.println("[erreur à l'enregistrement du client] " + e);
-		}
-		return true;
+	public void initTable(MahjongTableInterface table) throws RemoteException {
+		this.server = table;
 	}
+
+	public void discoverOther(MahjongPlayerInterface other) throws RemoteException {
+		String ventCharacter = other.getVentChar();
+		if (this.isSuivant(ventCharacter)) {
+			this.playerDroite = other;
+		} else if (this.isPrecedent(ventCharacter)) {
+			this.playerGauche = other;
+		} else {
+			this.playerFace = other;
+		}
+	}
+
+	// Gameplay-related interactions
 
 	public void startGame(boolean me) throws RemoteException {
 		System.out.println("[startGame] " + me);
 		if (me) { // if c'est mon tour
 			this.playNormal();
-			// TODO appeler le startGame du vent suivant
+			this.playerDroite.startGame(true);
 		// } else { // if c'est pas mon tour TODO
-		// 	this.playAnnonce(); // FIXME lui il existe en permanence dans un autre thread
+		// 	this.playAnnonce(); // FIXME lui il existerait en permanence dans un autre thread
 		}
 	}
 
-	//----------------------------------------------------------------------------------------------
+	/*
+	 * Piocher une tuile DOIT faire appel au serveur, puisque c'est lui qui a la muraille.
+	 */
+	private void piocheTuile() {
+		try {
+			AbstractTuile t = this.server.pioche();
+			this.hand.add(t);
+			// System.out.println("pioche = " + t.toString());
+		} catch (RemoteException e){
+			System.out.println("[erreur client (pioche)] " + e);
+		}
+	}
+
+	public AbstractTuile volLastTuile() throws RemoteException {
+		AbstractTuile temp = new TuileNombre('r', 3, 2);
+		// TODO
+		return temp;
+	}
+
+	/*
+	 * TODO pas besoin de faire appel au serveur pour ça normalement
+	 */
+	private void poseTuile(int index) {
+		// AbstractTuile t = this.hand.get(index);
+		// this.hand.remove(t);
+		// this.server.pose(t);
+		// System.out.println("pose = " + t.toString());
+		// FIXME TODO ajouter à ma rivière et notifier les autres
+	}
+
+	// Other interactions
+
+	public String getCombis() throws RemoteException {
+		return "TODO";
+	}
+
+	public String getRiviere() throws RemoteException {
+		return "TODO";
+	}
+
+	public String getPseudo() throws RemoteException {
+		return this.pseudo;
+	}
+
+	public String getVentChar() throws RemoteException {
+		return this.vent;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// Gameplay loops //////////////////////////////////////////////////////////////////////////////
 
 	private void playNormal() {
 		// 13 tuiles → on pioche → 14 donc → possibilité d'annoncer tsumo (ou kan ?), ou défausse
@@ -119,47 +175,18 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		String[] actions = {"pon", "kan", "chii", "ron"/*, "rien"*/};
 		this.updateUI(false, "Que faire ?");
 		action_id = this.askChoice(actions, false);
-		this.voleTuile( actions[action_id] );
+		try {
+			this.volLastTuile(/* actions[action_id] TODO */);
+		} catch (Exception e) {
+			System.out.println("erreur dans playAnnonce : " + e);
+		}
 		if (action_id == 1) {
 			// repiocher ???? XXX
 		}
 	}
 
-	//----------------------------------------------------------------------------------------------
-
-	private void resetTerminal() {
-		System.out.print("\033[H\033[2J");
-		System.out.flush();
-	}
-
-	private void printMurMort() {
-		String mur = "▉▉▉▉▉▉▉"; // TODO
-		System.out.println("Indicateurs de dora : " + mur);
-	}
-
-	private void printBoard() {
-		// TODO TODO TODO TODO TODO
-		// String annonces_opp = "[pon/kan/chii du vent opposé]";
-		// System.out.println(annonces_opp + "[symbole du vent opposé]");
-		// String[] river_opp = this.getEmojiStrings(this.river.get(3));
-		// System.out.println(river_opp + "\n");
-
-		// String annonces_drt = "[pon/kan/chii du vent droite]";
-		// System.out.println(annonces_drt + "[symbole du vent droite]");
-		// String[] river_drt = this.getEmojiStrings(this.river.get(2));
-		// System.out.println(river_drt + "\n");
-
-		// String annonces_gch = "[pon/kan/chii du vent gauche]";
-		// System.out.println(annonces_gch + "[symbole du vent gauche]");
-		// String[] river_gch = this.getEmojiStrings(this.river.get(1));
-		// System.out.println(river_gch + "\n");
-		//String.substring(index1, index2) pour afficher ça mieux ? ou faire tuile par tuile
-
-		// String annonces_self = "[pon/kan/chii de nous]";
-		// System.out.println(annonces_self + " " + this.vent);
-		// String[] river_self = this.getEmojiStrings(this.river.get(0));
-		// System.out.println(river_self + "\n");
-	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// Asking input and printing the UI ////////////////////////////////////////////////////////////
 
 	private int askHandChoice() {
 		this.updateUI(true, "Choisissez une tuile à jeter :");
@@ -194,14 +221,6 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		return this.askIntInput();
 	}
 
-	private String[] getEmojiStrings(ArrayList<AbstractTuile> alist) {
-		String[] handLabel = new String[alist.size()];
-		for(int i=0; i < alist.size(); i++) {
-			handLabel[i] = alist.get(i).getEmoji();
-		}
-		return handLabel;
-	}
-
 	private int askIntInput() {
 		Scanner keyboard = new Scanner(System.in);
 		try {
@@ -213,55 +232,83 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 
 	private void updateUI(boolean withChoice, String prompt) {
 		this.resetTerminal();
-		System.out.println("[" + this.pseudo + " - " + this.vents[3] + "]");
-		System.out.println("[Joueur courant : ?????]");
-		this.printMurMort();
 		this.printBoard();
-		// this.showChoices(this.getEmojiStrings(this.hand), true, withChoice);
-		// System.out.println("\n" + prompt);
+		this.showChoices(this.getEmojiStrings(this.hand), true, withChoice);
+		System.out.println("\n" + prompt);
 	}
 
-	//----------------------------------------------------------------------------------------------
+	private void resetTerminal() {
+		System.out.print("\033[H\033[2J");
+		System.out.flush();
+	}
 
-	/*
-	 * Piocher une tuile DOIT faire appel au serveur, puisque c'est lui qui a la muraille.
-	 */
-	private void piocheTuile() {
+	private void printMurMort() {
+		String mur = "▉▉▉▉▉▉▉"; // TODO
+		System.out.println("Indicateurs de dora : " + mur);
+	}
+
+	private void printJoueur(MahjongPlayerInterface j) {
+		System.out.println("");
 		try {
-			AbstractTuile t = this.server.pioche();
-			this.hand.add(t);
-			// System.out.println("pioche = " + t.toString());
-		} catch (RemoteException e){
-			System.out.println("[erreur client (pioche)] " + e);
+			System.out.println("Joueur du vent " + j.getVentChar() + " (" + j.getPseudo() + ")");
+			System.out.println("[Combinaisons annoncées] " + j.getCombis());
+			System.out.println("[Tuiles défaussées] " + j.getRiviere());
+		} catch (Exception e) {
+			System.out.println("Joueur injoignable : " + e);
 		}
 	}
 
-	/*
-	 * TODO pas besoin de faire appel au serveur pour ça normalement
-	 */
-	private void poseTuile(int index) {
-		try {
-			AbstractTuile t = this.hand.get(index);
-			this.hand.remove(t);
-			this.server.pose(t);
-			System.out.println("pose = " + t.toString());
-		} catch (RemoteException e){
-			System.out.println("[erreur client (pose)] " + e);
-		}
+	private void printStatus() {
+		System.out.print("[Vous : " + this.pseudo + " - " + this.vent + "] ");
+		System.out.print("[Joueur courant : TODO] ");
+		this.printMurMort();
 	}
 
-	/*
-	 * TODO pas besoin de faire appel au serveur pour ça normalement
-	 */
-	private void voleTuile(String annonce) {
-		try {
-			AbstractTuile t = this.server.annonceEtVol(annonce);
-			System.out.println("vol = " + t.toString());
-		} catch (RemoteException e){
-			System.out.println("[erreur client (vol, 1)] " + e);
-		} catch (Exception e){
-			System.out.println("[erreur client (vol, 2)] " + e);
+	private void printBoard() {
+		this.printStatus();
+		this.printJoueur(this.playerDroite);
+		this.printJoueur(this.playerFace);
+		this.printJoueur(this.playerGauche);
+		this.printJoueur(this);
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// Misc ////////////////////////////////////////////////////////////////////////////////////////
+
+	private String[] getEmojiStrings(ArrayList<AbstractTuile> alist) {
+		String[] handLabel = new String[alist.size()];
+		for(int i=0; i < alist.size(); i++) {
+			handLabel[i] = alist.get(i).getEmoji();
 		}
+		return handLabel;
+	}
+
+	private boolean isSuivant(String autreVent) {
+		switch (autreVent) {
+			case "東":
+				return this.vent.equals("南");
+			case "南":
+				return this.vent.equals("西");
+			case "西":
+				return this.vent.equals("北");
+			case "北":
+				return this.vent.equals("東");
+		}
+		return false;
+	}
+
+	private boolean isPrecedent(String autreVent) {
+		switch (autreVent) {
+			case "南":
+				return this.vent.equals("東");
+			case "西":
+				return this.vent.equals("南");
+			case "北":
+				return this.vent.equals("西");
+			case "東":
+				return this.vent.equals("北");
+		}
+		return false;
 	}
 
 }

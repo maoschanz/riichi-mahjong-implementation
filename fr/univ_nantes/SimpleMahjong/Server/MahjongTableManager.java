@@ -1,5 +1,6 @@
 package fr.univ_nantes.SimpleMahjong.Server;
 import fr.univ_nantes.SimpleMahjong.Interface.*;
+import fr.univ_nantes.SimpleMahjong.Tuile.*;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -42,11 +43,15 @@ public class MahjongTableManager extends UnicastRemoteObject implements MahjongT
 			for (int i=0; i<4; i++) {
 				this.players[i].initTable(this);
 				this.players[i].initHand(VENTS[i]);
+			}
+			for (int i=0; i<4; i++) {
 				for (int h=0; h<4; h++) {
 					if (h != i) {
-						this.players[i].discoverOther(this.players[h], VENTS[h], h);
+						this.players[i].discoverOther(this.players[h]);
 					}
 				}
+			}
+			for (int i=0; i<4; i++) {
 				this.players[i].startGame(VENTS[i].equals("東"));
 			}
 		} catch(Exception e) {
@@ -84,14 +89,6 @@ public class MahjongTableManager extends UnicastRemoteObject implements MahjongT
 		// XXX en théorie non puisqu'on le prend plutôt à partir de la brêche
 		this.muraille.remove(0);
 		return t;
-	}
-
-	/*
-	 * TODO pourrait se gérer entre joueurs sans intervention du serveur
-	 */
-	public void pose(AbstractTuile t) throws RemoteException {
-		this.river.addLast(t);
-		// TODO notifier les joueurs de la pose
 	}
 }
 
