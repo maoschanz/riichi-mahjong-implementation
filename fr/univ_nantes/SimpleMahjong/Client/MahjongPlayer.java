@@ -100,21 +100,28 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		}
 	}
 
-	public AbstractTuile volLastTuile() throws RemoteException {
+	public AbstractTuile volLastTuile(String s) throws RemoteException { // TODO
+		System.out.println("annonce : " + s);
+		switch(s) {
+			case "chii": break; // suite TODO
+			case "pon": break; // brelan TODO
+			default: break; // case "kan" // carré TODO
+		}
+		// AbstractTuile temp = this.river.getLast();
+		// this.river.removeLast();
 		AbstractTuile temp = new TuileNombre('r', 3, 2);
-		// TODO
 		return temp;
 	}
 
 	/*
-	 * TODO pas besoin de faire appel au serveur pour ça normalement
+	 * retirer de ma main, ajouter à ma rivière, et envoyer l'info à tous les autres joueurs
 	 */
 	private void poseTuile(int index) {
-		// AbstractTuile t = this.hand.get(index);
-		// this.hand.remove(t);
-		// this.server.pose(t);
-		// System.out.println("pose = " + t.toString());
-		// FIXME TODO ajouter à ma rivière et notifier les autres
+		AbstractTuile t = this.hand.get(index);
+		this.hand.remove(t);
+		this.river.add(t);
+		System.out.println("pose = " + t.toString());
+		// TODO notifier les autres
 	}
 
 	// Other interactions
@@ -152,8 +159,8 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 
 		if (action_id == 0) {
 			tuile_index = this.askHandChoice();
-			System.out.println("tuile_index : " + tuile_index);
 			this.poseTuile(tuile_index);
+			this.updateUI(false, ""); // TODO en théorie plus tard il faut qu'on propose le vol
 		} else if (action_id == 1) {
 			// fin théorique de la partie (à faire vérifier par le serveur ?)
 		} else if (action_id == 2) {
@@ -176,7 +183,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		this.updateUI(false, "Que faire ?");
 		action_id = this.askChoice(actions, false);
 		try {
-			this.volLastTuile(/* actions[action_id] TODO */);
+			this.volLastTuile(actions[action_id]);
 		} catch (Exception e) {
 			System.out.println("erreur dans playAnnonce : " + e);
 		}
@@ -190,7 +197,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 
 	private int askHandChoice() {
 		this.updateUI(true, "Choisissez une tuile à jeter :");
-		return this.askIntInput();
+		return this.askIntInput(this.hand.size());
 	}
 
 	private void showChoices(String[] values, boolean horizontal, boolean showNum) {
@@ -218,16 +225,20 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 
 	private int askChoice(String[] values, boolean horizontal) {
 		this.showChoices(values, horizontal, true);
-		return this.askIntInput();
+		return this.askIntInput(values.length);
 	}
 
-	private int askIntInput() {
-		Scanner keyboard = new Scanner(System.in);
-		try {
-			return keyboard.nextInt();
-		} catch (Exception e) {
-			return this.askIntInput(); // honteux XXX
+	private int askIntInput(int inputMax) {
+		int ret = inputMax;
+		while (ret >= inputMax) {
+			Scanner keyboard = new Scanner(System.in);
+			try {
+				ret = keyboard.nextInt();
+			} catch (Exception e) {
+				ret = inputMax;
+			}
 		}
+		return ret;
 	}
 
 	private void updateUI(boolean withChoice, String prompt) {
@@ -243,8 +254,9 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	}
 
 	private void printMurMort() {
-		String mur = "▉▉▉▉▉▉▉"; // TODO
-		System.out.println("Indicateurs de dora : " + mur);
+		// TODO pourrait être implémenté, mais honnêtement j'ai la flemme
+		// String mur = "▉▉▉▉▉▉▉";
+		// System.out.println("Indicateurs de dora : " + mur);
 	}
 
 	private void printJoueur(MahjongPlayerInterface j) {
@@ -260,7 +272,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 
 	private void printStatus() {
 		System.out.print("[Vous : " + this.pseudo + " - " + this.vent + "] ");
-		System.out.print("[Joueur courant : TODO] ");
+		System.out.print("[Joueur courant : " + /*TODO +*/ "] ");
 		this.printMurMort();
 	}
 

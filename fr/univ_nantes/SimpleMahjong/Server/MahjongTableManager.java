@@ -36,7 +36,7 @@ public class MahjongTableManager extends UnicastRemoteObject implements MahjongT
 			}
 		}
 		Collections.shuffle(this.muraille);
-		// retourner un indicateur de dora TODO
+		// retourner un indicateur de dora (TODO si je suis vraiment motivé)
 
 		String[] VENTS= {"東", "南", "西", "北"}; // TODO passer des TuileVent plutôt
 		try {
@@ -51,30 +51,23 @@ public class MahjongTableManager extends UnicastRemoteObject implements MahjongT
 					}
 				}
 			}
-			for (int i=0; i<4; i++) {
-				this.players[i].startGame(VENTS[i].equals("東"));
-			}
 		} catch(Exception e) {
 			System.out.println("[erreur à l'initialisation de la table] " + e);
+		}
+
+		try {
+			for (int i=0; i<4; i++) {
+				this.players[i].startGame(VENTS[i].equals("東"));
+				// XXX euh comment c'est possible que ça n'attende pas à ce moment là ? ça veut dire
+				// que les joueurs ne peuvent pas voler pendant le 1er tour ? TODO à éclaicir
+			}
+		} catch(Exception e) {
+			System.out.println("Perte de la connexion avec l'un des joueurs."); // TODO dire lequel
+			System.out.println(e);
 		}
 	}
 
 	//----------------------------------------------------------------------------------------------
-
-	/*
-	 * TODO pourrait se faire entre joueurs sans intervention du serveur
-	 */
-	public AbstractTuile annonceEtVol(String s) throws Exception {
-		System.out.println("annonce : " + s);
-		switch(s) {
-			case "chii": break; // suite TODO
-			case "pon": break; // brelan TODO
-			default: break; // case "kan" // carré TODO
-		}
-		AbstractTuile t = this.river.getLast();
-		this.river.removeLast();
-		return t;
-	}
 
 	/*
 	 * Fournit une nouvelle tuile au joueur qui en demande. Il est important que la muraille soit
