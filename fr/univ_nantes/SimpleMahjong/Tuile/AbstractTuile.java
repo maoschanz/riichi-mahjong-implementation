@@ -13,11 +13,11 @@ public abstract class AbstractTuile implements Comparable, Serializable {
 		this.exemplaire = exemplaire;
 	}
 
-	public String toString() {
+	public String getName() {
 		return this.name;
 	}
 
-	public String getEmoji() {
+	public String toString() {
 		return this.label;
 	}
 

@@ -94,7 +94,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		try {
 			AbstractTuile t = this.server.pioche();
 			this.hand.add(t);
-			// System.out.println("pioche = " + t.toString());
+			// System.out.println("pioche = " + t.getName());
 		} catch (RemoteException e){
 			System.out.println("[erreur client (pioche)] " + e);
 		}
@@ -120,18 +120,18 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		AbstractTuile t = this.hand.get(index);
 		this.hand.remove(t);
 		this.river.add(t);
-		System.out.println("pose = " + t.toString());
+		System.out.println("pose = " + t.getName());
 		// TODO notifier les autres
 	}
 
 	// Other interactions
 
 	public String getCombis() throws RemoteException {
-		return "TODO";
+		return this.combiShown.toString();
 	}
 
 	public String getRiviere() throws RemoteException {
-		return "TODO";
+		return this.river.toString();
 	}
 
 	public String getPseudo() throws RemoteException {
@@ -290,7 +290,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	private String[] getEmojiStrings(ArrayList<AbstractTuile> alist) {
 		String[] handLabel = new String[alist.size()];
 		for(int i=0; i < alist.size(); i++) {
-			handLabel[i] = alist.get(i).getEmoji();
+			handLabel[i] = alist.get(i).toString();
 		}
 		return handLabel;
 	}
