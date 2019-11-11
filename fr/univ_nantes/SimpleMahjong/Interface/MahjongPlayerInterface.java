@@ -14,6 +14,7 @@ public interface MahjongPlayerInterface extends Remote {
 	String getRiviere() throws RemoteException;
 	String getCombis() throws RemoteException;
 	AbstractTuile volLastTuile(String s) throws RemoteException;
+	boolean isJoueurCourant() throws RemoteException;
 
 	// Pour le serveur
 	void discoverOther(MahjongPlayerInterface other) throws RemoteException;

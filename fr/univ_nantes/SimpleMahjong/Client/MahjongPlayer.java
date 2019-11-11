@@ -21,6 +21,8 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	private MahjongPlayerInterface playerDroite; // shimocha
 	private MahjongPlayerInterface playerFace; // toimen
 	private MahjongPlayerInterface playerGauche; // kamicha
+	private final static String START_COLO_TAG = "\033[30;106m";
+	private final static String END_COLO_TAG = "\033[0m";
 
 	public MahjongPlayer(MahjongLobbyInterface lobby) throws RemoteException {
 		Scanner keyboard = new Scanner(System.in);
@@ -78,11 +80,13 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	// Gameplay-related interactions
 
 	public void startGame(boolean me) throws RemoteException {
-		System.out.println("[startGame] " + me);
 		if (me) { // if c'est mon tour
 			this.playNormal();
+			this.playerGauche.startGame(false);
+			this.playerFace.startGame(false);
 			this.playerDroite.startGame(true);
-		// } else { // if c'est pas mon tour TODO
+		} else { // if c'est pas mon tour TODO
+			this.updateUI(false, ""); // XXX temporairement
 		// 	this.playAnnonce(); // FIXME lui il existerait en permanence dans un autre thread
 		}
 	}
@@ -140,6 +144,11 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 
 	public String getVentChar() throws RemoteException {
 		return this.vent;
+	}
+
+	public boolean isJoueurCourant() throws RemoteException {
+		// TODO
+		return false;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -255,14 +264,21 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 
 	private void printMurMort() {
 		// TODO pourrait être implémenté, mais honnêtement j'ai la flemme
-		// String mur = "▉▉▉▉▉▉▉";
-		// System.out.println("Indicateurs de dora : " + mur);
+		String mur = "▉▉▉▉▉▉▉";
+		System.out.print("Indicateurs de dora : " + mur);
 	}
 
 	private void printJoueur(MahjongPlayerInterface j) {
 		System.out.println("");
 		try {
-			System.out.println("Joueur du vent " + j.getVentChar() + " (" + j.getPseudo() + ")");
+			String joueurStatus = "Joueur du vent " + j.getVentChar() + " (" + j.getPseudo() + ")";
+			if (j.isJoueurCourant()) {
+				joueurStatus += " " + START_COLO_TAG + "(en train de jouer)" + END_COLO_TAG;
+			}
+			if (j.equals(this)) {
+				joueurStatus += " " + START_COLO_TAG + "(Vous)" + END_COLO_TAG;
+			}
+			System.out.println(joueurStatus);
 			System.out.println("[Combinaisons annoncées] " + j.getCombis());
 			System.out.println("[Tuiles défaussées] " + j.getRiviere());
 		} catch (Exception e) {
@@ -271,9 +287,11 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	}
 
 	private void printStatus() {
-		System.out.print("[Vous : " + this.pseudo + " - " + this.vent + "] ");
-		System.out.print("[Joueur courant : " + /*TODO +*/ "] ");
+		System.out.print(START_COLO_TAG);
+		// System.out.print("[Vous : " + this.pseudo + " - " + this.vent + "] ");
+		// System.out.print("[Joueur courant : " + /*TODO +*/ "] ");
 		this.printMurMort();
+		System.out.println(END_COLO_TAG);
 	}
 
 	private void printBoard() {

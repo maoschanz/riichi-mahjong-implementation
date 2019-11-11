@@ -57,7 +57,13 @@ public class MahjongTableManager extends UnicastRemoteObject implements MahjongT
 
 		try {
 			for (int i=0; i<4; i++) {
-				this.players[i].startGame(VENTS[i].equals("東"));
+				this.players[i].startGame(false);
+			}
+			for (int i=0; i<4; i++) {
+				System.out.println("table, ligne 64, ok : " + i);
+				this.players[i].startGame(VENTS[i].equals("東")); // ne dépasse jamais la 1ère
+				// itération de cette ligne là ^
+				System.out.println("table, ligne 66, ok : " + i);
 				// XXX euh comment c'est possible que ça n'attende pas à ce moment là ? ça veut dire
 				// que les joueurs ne peuvent pas voler pendant le 1er tour ? TODO à éclaicir
 			}
