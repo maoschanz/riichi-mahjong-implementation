@@ -22,7 +22,6 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	private MahjongPlayerInterface playerFace; // toimen
 	private MahjongPlayerInterface playerGauche; // kamicha
 	private int[] riversLength = new int[]{0,0,0,0};
-	private int[] combisLength = new int[]{0,0,0,0};
 	private MahjongPlayerInterface lastPlayer;
 	private final static String START_COLO_TAG = "\033[30;106m";
 	private final static String END_COLO_TAG = "\033[0m";
@@ -85,76 +84,21 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 
 	public void startGame(boolean isMe) throws RemoteException {
 		this.isPlaying = isMe;
-		if (isMe) { // if c'est mon tour
-			this.playCycleNormal();
-		} else { // if c'est pas mon tour
-			this.updateUI(false, "[annonces invalides ici (pas de tuiles)]");
-		}
+		// synchronized (this.bgThread) {
+		// 	System.out.println("[notify, ligne 93]");
+		// 	this.bgThread.notify();
+		// }
+		System.out.println("[fin du startGame, ligne 108]");
 	}
 
 	public void continueGame(boolean isMe) throws RemoteException {
 		this.isPlaying = isMe;
-		this.updateRiversLength();
-		if (isMe) { // if c'est mon tour
-			this.playCycleNormal();
-		} else { // if c'est pas mon tour
-			this.updateUI(false, "Tapez une annonce si besoin (pon/kan/ron)");
-			synchronized (this.bgThread) {
-				this.bgThread.notify();
-			}
-			System.out.println("[fin du else, ligne 105]");
-		}
-	}
-
-	private void playCycleNormal() throws RemoteException {
-		this.playNormal();
-		this.isPlaying = false; // XXX pas fiable, on devrait se reposer sur les vents je pense
-		this.playerGauche.continueGame(false);
-		this.playerFace.continueGame(false);
-		this.updateUI(false, "[annonces invalides pour le moment (attente du joueur suivant)]");
-		this.playerDroite.continueGame(true);
-	}
-
-	/*
-	 * Piocher une tuile DOIT faire appel au serveur, puisque c'est lui qui a la muraille.
-	 */
-	private void piocheTuile() {
-		try {
-			AbstractTuile t = this.server.pioche();
-			this.hand.add(t);
-			// System.out.println("pioche = " + t.getName());
-		} catch (RemoteException e){
-			System.out.println("[erreur client (pioche)] " + e);
-		}
-	}
-
-	private void volLastTuile(String s) {
-		System.out.println("annonce : " + s);
-		try {
-			AbstractTuile temp = this.lastPlayer.getLastTuile();
-			this.lastPlayer.removeLastTuile();
-			this.hand.add(temp);
-		} catch (Exception e) {
-			// soit RemoteException soit NullPointerException
-		}
-		switch(s) {
-			case "ron":
-				// victoire TODO
-				break;
-			case "chii":
-				// suite TODO
-				break;
-			case "pon":
-				// brelan TODO
-				break;
-			case "kan":
-				// carré TODO
-				// this.hand.remove(???);
-				// this.combiShown.add(???);
-				break;
-			default:
-				break; // invalide ? TODO
-		}
+		this.updateRiversLength(); // XXX chelou que ce soit là
+		// synchronized (this.bgThread) {
+		// 	System.out.println("[notify, ligne 106]");
+		// 	this.bgThread.notify();
+		// }
+		System.out.println("[fin du continueGame, ligne 108]");
 	}
 
 	/*
@@ -206,12 +150,33 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Gameplay loops //////////////////////////////////////////////////////////////////////////////
 
-	private void playNormal() {
+	public void mainCycle(String input) {
+		try {
+			if (this.isJoueurCourant()) {
+				this.updateUI(false, "Que voulez-vous faire ?");
+				this.playCycleNormal(input);
+			} else {
+				this.updateUI(false, "Tapez une annonce si besoin (pon/kan/ron)");
+				this.playAnnonce(input);
+			}
+		} catch (RemoteException e) {
+			System.out.println("[erreur dans le cycle de jeu du plus haut niveau] " + e);
+		}
+	}
+
+	private void playCycleNormal(String input) throws RemoteException {
+		this.faireActionJeu(input);
+		this.isPlaying = false; // XXX pas fiable, on devrait se reposer sur les vents je pense
+		this.playerGauche.continueGame(false);
+		this.playerFace.continueGame(false);
+		this.updateUI(false, "[annonces invalides pour le moment (attente du joueur suivant)]");
+		this.playerDroite.continueGame(true);
+	}
+
+	private void faireActionJeu(String input) {
 		// 13 tuiles → on pioche → 14 donc → possibilité d'annoncer tsumo (ou kan ?), ou défausse
 		// (ou défausse avec riichi) (→ si kan, repiocher) → joueur suivant
 		int action_id = 0;
-		this.piocheTuile();
-		Collections.sort(this.hand);
 		// XXX kan ?
 		String[] actions = {
 			"Piocher",
@@ -220,7 +185,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 			"Annoncer kan (utilisation de la tuile de l'adversaire pour compléter un carré)",
 			"Annoncer ron (utilisation de la tuile de l'adversaire pour compléter une main)"
 		};
-		this.updateUI(false, "Que faire ?");
+		this.updateUI(false, "Que faire ?" + input);
 		action_id = this.askChoice(actions, false);
 
 		if (action_id == 0) {
@@ -245,9 +210,12 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	private void playPioche() {
 		int action_id = 0;
 		int tuile_index = 0;
+		this.piocheTuile();
+		Collections.sort(this.hand);
 		String[] actions = {
 			"Se défausser d'une tuile", // XXX l'UX est améliorable en proposant directement les
 			// numéros pour défausser et en dessous les actions tsumo et kan avec les numéros suivants
+			// Ça simplifierait d'ailleurs le code
 			"Annoncer tsumo (main complétée par la pioche)",
 			"Annoncer kan (complétion d'un carré, il faudra repiocher)"
 		};
@@ -268,15 +236,20 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		}
 	}
 
-	public void playAnnonce() { // XXX "public"...
+	private void playAnnonce(String input) {
 		// 13 tuiles → on vole → 14 donc → possibilité d'annoncer ron, pon, kan (ou chii) → si kan,
 		// repiocher [dans le mur mort, et la dernière tuile du mur est ajoutée au mur mort ??? faut
 		// qu'il reste à 14 tuiles, et on révèle un nouvel indicateur de dora] → joueur suivant
 		int action_id = 0;
 		int tuile_index = 0;
-		String[] actions = {"invalid", "pon", "kan", "chii", "ron"};
-		this.updateUI(false, "Tapez une annonce si besoin (chii/pon/kan/ron)");
-		action_id = this.askAnnonce(actions);
+		String[] actions = {"invalid", "pon", "kan", "ron"};
+		this.updateUI(false, "Tapez une annonce si besoin (pon/kan/ron)");
+
+		for(int i=1; i<4; i++) {
+			if (input.equals(actions[i])) {
+				action_id = i;
+			}
+		}
 		System.out.println("action_id " + action_id);
 
 		if (action_id > 0) {
@@ -293,23 +266,50 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	// Asking input and printing the UI ////////////////////////////////////////////////////////////
 
-	private int askAnnonce(String[] actions) {
-		String ret = "";
-		Scanner keyboard = new Scanner(System.in);
+	/*
+	 * Piocher une tuile DOIT faire appel au serveur, puisque c'est lui qui a la muraille.
+	 */
+	private void piocheTuile() {
 		try {
-			ret = keyboard.nextLine();
-		} catch (Exception e) {
-			ret = "";
+			AbstractTuile t = this.server.pioche();
+			this.hand.add(t);
+		} catch (RemoteException e){
+			System.out.println("[erreur client (pioche)] " + e);
 		}
-		for(int i=1; i<5; i++) {
-			if (ret.equals(actions[i])) {
-				return i;
-			}
-		}
-		return 0;
 	}
+
+	private void volLastTuile(String s) {
+		System.out.println("annonce : " + s);
+		try {
+			AbstractTuile temp = this.lastPlayer.getLastTuile();
+			switch(s) {
+				case "ron":
+					// victoire TODO
+					break;
+				case "chii":
+					// suite TODO
+					break;
+				case "pon":
+					// brelan TODO
+					break;
+				case "kan":
+					// carré TODO
+					// this.hand.remove(???);
+					// this.combiShown.add(???);
+					break;
+				default:
+					return; // annonce invalide
+			}
+			this.lastPlayer.removeLastTuile();
+			this.hand.add(temp);
+		} catch (Exception e) {
+			// soit RemoteException soit NullPointerException
+		}
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// Asking input and printing the UI ////////////////////////////////////////////////////////////
 
 	private int askHandChoice() {
 		this.updateUI(true, "Choisissez une tuile à jeter :");
@@ -357,6 +357,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		return ret;
 	}
 
+	// XXX TODO virer le withChoice plus tard
 	private void updateUI(boolean withChoice, String prompt) {
 		this.resetTerminal();
 		this.printBoard();
@@ -464,9 +465,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	private void updateRiverForPlayer(MahjongPlayerInterface j, int index) throws RemoteException {
 		int lastValueR = this.riversLength[index];
 		this.riversLength[index] = j.getRiviere().length(); // ce sont des tailles de chaînes
-		int lastValueC = this.combisLength[index];
-		this.combisLength[index] = j.getCombis().length(); // ce sont des tailles de chaînes
-		if (lastValueR != this.riversLength[index] || lastValueC != this.combisLength[index]) {
+		if (lastValueR != this.riversLength[index]) {
 			this.lastPlayer = j;
 			// TODO probablement d'autes choses à faire ici
 		}

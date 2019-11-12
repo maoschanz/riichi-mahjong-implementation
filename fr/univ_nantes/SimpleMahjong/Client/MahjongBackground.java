@@ -19,20 +19,31 @@ public class MahjongBackground extends Thread {
 		this.player = player;
 	}
 
-	private void tryRunAnnonce() throws InterruptedException {
-		synchronized (this) {
-			System.out.println("Background thread pausing");
-			wait();
-		}
+	private void tryRun1Cycle() throws InterruptedException {
+		// synchronized (this) {
+		// 	System.out.println("Background thread pausing");
+		// 	wait();
+		// }
 		System.out.println("Background thread running");
-		this.player.playAnnonce();
+		String input = this.askRawInput();
+		this.player.mainCycle(input);
+	}
+
+	private String askRawInput() {
+		String ret = "";
+		Scanner keyboard = new Scanner(System.in);
+		try {
+			ret = keyboard.nextLine();
+		} catch (Exception e) {
+			ret = "";
+		}
+		return ret;
 	}
 
 	public void run() {
 		try {
 			while(true) {
-				this.tryRunAnnonce();
-
+				this.tryRun1Cycle();
 			}
 		} catch (InterruptedException e) {
 			System.out.println("Background thread stopped with an error: " + e);
