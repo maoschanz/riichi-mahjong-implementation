@@ -23,6 +23,8 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	private MahjongPlayerInterface playerGauche; // kamicha
 	private final static String START_COLO_TAG = "\033[30;106m";
 	private final static String END_COLO_TAG = "\033[0m";
+	private MahjongBackground bgThread;
+	private boolean isPlaying = false;
 
 	public MahjongPlayer(MahjongLobbyInterface lobby) throws RemoteException {
 		Scanner keyboard = new Scanner(System.in);
@@ -35,6 +37,9 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		} catch (Exception e) {
 			this.pseudo = "Joueur n°" + new Random().nextInt();
 		}
+
+		this.bgThread = new MahjongBackground(this);
+		this.bgThread.start();
 
 		try {
 			System.out.println("En attente des autres joueurs…");
@@ -55,9 +60,9 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		for (int i=0; i<13; i++) {
 			this.piocheTuile();
 		}
-		if (vent.equals("東")) {
-			this.piocheTuile();
-		}
+		// if (vent.equals("東")) { // XXX non parce qu'on commence playNormal par une pioche
+		// 	this.piocheTuile();
+		// }
 		System.out.println("hand = " + this.hand);
 		Collections.sort(this.hand);
 	}
@@ -79,15 +84,20 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 
 	// Gameplay-related interactions
 
-	public void startGame(boolean me) throws RemoteException {
-		if (me) { // if c'est mon tour
+	public void startGame(boolean isMe) throws RemoteException {
+		this.isPlaying = isMe;
+		if (isMe) { // if c'est mon tour
 			this.playNormal();
+			this.isPlaying = false;
 			this.playerGauche.startGame(false);
 			this.playerFace.startGame(false);
 			this.playerDroite.startGame(true);
-		} else { // if c'est pas mon tour TODO
-			this.updateUI(false, ""); // XXX temporairement
-		// 	this.playAnnonce(); // FIXME lui il existerait en permanence dans un autre thread
+		} else { // if c'est pas mon tour
+			this.updateUI(false, ""); // temporairement ?
+			synchronized (this.bgThread) {
+				this.bgThread.notify();
+			}
+			System.out.println("Fin du else, ligne 104");
 		}
 	}
 
@@ -118,14 +128,12 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	}
 
 	/*
-	 * retirer de ma main, ajouter à ma rivière, et envoyer l'info à tous les autres joueurs
+	 * Retirer une tuile de ma main et l'ajouter à ma rivière
 	 */
 	private void poseTuile(int index) {
 		AbstractTuile t = this.hand.get(index);
 		this.hand.remove(t);
 		this.river.add(t);
-		System.out.println("pose = " + t.getName());
-		// TODO notifier les autres
 	}
 
 	// Other interactions
@@ -147,8 +155,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	}
 
 	public boolean isJoueurCourant() throws RemoteException {
-		// TODO
-		return false;
+		return this.isPlaying;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -182,7 +189,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		}
 	}
 
-	private void playAnnonce() {
+	public void playAnnonce() { // XXX "public"...
 		// 13 tuiles → on vole → 14 donc → possibilité d'annoncer ron, pon, kan (ou chii) → si kan,
 		// repiocher [dans le mur mort, et la dernière tuile du mur est ajoutée au mur mort ??? faut
 		// qu'il reste à 14 tuiles, et on révèle un nouvel indicateur de dora] → joueur suivant
@@ -191,6 +198,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		String[] actions = {"pon", "kan", "chii", "ron"/*, "rien"*/};
 		this.updateUI(false, "Que faire ?");
 		action_id = this.askChoice(actions, false);
+		System.out.println("action_id " + action_id);
 		try {
 			this.volLastTuile(actions[action_id]);
 		} catch (Exception e) {
@@ -199,6 +207,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		if (action_id == 1) {
 			// repiocher ???? XXX
 		}
+		System.out.println("fin de playAnnonce");
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
