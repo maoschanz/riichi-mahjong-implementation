@@ -98,7 +98,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		if (isMe) { // if c'est mon tour
 			this.playCycleNormal();
 		} else { // if c'est pas mon tour
-			this.updateUI(false, "Tapez une annonce si besoin (chii/pon/kan/ron)");
+			this.updateUI(false, "Tapez une annonce si besoin (pon/kan/ron)");
 			synchronized (this.bgThread) {
 				this.bgThread.notify();
 			}
@@ -111,7 +111,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		this.isPlaying = false; // XXX pas fiable, on devrait se reposer sur les vents je pense
 		this.playerGauche.continueGame(false);
 		this.playerFace.continueGame(false);
-		this.updateUI(false, "[annonces invalides ici (attente du joueur suivant)]");
+		this.updateUI(false, "[annonces invalides pour le moment (attente du joueur suivant)]");
 		this.playerDroite.continueGame(true);
 	}
 
@@ -210,14 +210,49 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		// 13 tuiles → on pioche → 14 donc → possibilité d'annoncer tsumo (ou kan ?), ou défausse
 		// (ou défausse avec riichi) (→ si kan, repiocher) → joueur suivant
 		int action_id = 0;
-		int tuile_index = 0;
 		this.piocheTuile();
 		Collections.sort(this.hand);
 		// XXX kan ?
-		String[] actions = {"défausse", "tsumo", "kan"};
+		String[] actions = {
+			"Piocher",
+			"Annoncer chii (utilisation de la tuile de l'adversaire pour compléter une suite de 3 tuiles)",
+			"Annoncer pon (utilisation de la tuile de l'adversaire pour compléter un brelan)",
+			"Annoncer kan (utilisation de la tuile de l'adversaire pour compléter un carré)",
+			"Annoncer ron (utilisation de la tuile de l'adversaire pour compléter une main)"
+		};
 		this.updateUI(false, "Que faire ?");
 		action_id = this.askChoice(actions, false);
 
+		if (action_id == 0) {
+			this.playPioche();
+		} else if (action_id == 1) {
+			this.volLastTuile("chii");
+		} else if (action_id == 2) {
+			this.volLastTuile("pon");
+		} else if (action_id == 3) {
+			this.volLastTuile("kan");
+			// XXX si on peut kan est-ce qu'on peut faire autre chose ?
+			this.piocheTuile();
+			Collections.sort(this.hand);
+			// TODO update l'interface pour montrer la rivière modifiée
+			// this.showChoices(this.getEmojiStrings(this.hand), true, false); // vraiment ? FIXME à vérifier
+		} else if (action_id == 4) {
+			this.volLastTuile("ron");
+			// TODO ...et ? victoire
+		}
+	}
+
+	private void playPioche() {
+		int action_id = 0;
+		int tuile_index = 0;
+		String[] actions = {
+			"Se défausser d'une tuile", // XXX l'UX est améliorable en proposant directement les
+			// numéros pour défausser et en dessous les actions tsumo et kan avec les numéros suivants
+			"Annoncer tsumo (main complétée par la pioche)",
+			"Annoncer kan (complétion d'un carré, il faudra repiocher)"
+		};
+		this.updateUI(false, "Que faire ?");
+		action_id = this.askChoice(actions, false);
 		if (action_id == 0) {
 			tuile_index = this.askHandChoice();
 			this.poseTuile(tuile_index);
@@ -242,8 +277,8 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		String[] actions = {"invalid", "pon", "kan", "chii", "ron"};
 		this.updateUI(false, "Tapez une annonce si besoin (chii/pon/kan/ron)");
 		action_id = this.askAnnonce(actions);
-		// action_id = this.askChoice(actions, false);
 		System.out.println("action_id " + action_id);
+
 		if (action_id > 0) {
 			this.volLastTuile(actions[action_id]);
 		} else {
