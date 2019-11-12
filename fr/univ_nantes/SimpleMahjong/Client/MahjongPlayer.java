@@ -84,21 +84,16 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 
 	public void startGame(boolean isMe) throws RemoteException {
 		this.isPlaying = isMe;
-		// synchronized (this.bgThread) {
-		// 	System.out.println("[notify, ligne 93]");
-		// 	this.bgThread.notify();
-		// }
 		System.out.println("[fin du startGame, ligne 108]");
+		this.updateUI(false, "************"); // XXX
 	}
 
 	public void continueGame(boolean isMe) throws RemoteException {
+		System.out.println("[début du continueGame, ligne 90] " + isMe);
 		this.isPlaying = isMe;
 		this.updateRiversLength(); // XXX chelou que ce soit là
-		// synchronized (this.bgThread) {
-		// 	System.out.println("[notify, ligne 106]");
-		// 	this.bgThread.notify();
-		// }
 		System.out.println("[fin du continueGame, ligne 108]");
+		this.updateUI(false, "////////"); // XXX
 	}
 
 	/*
@@ -186,7 +181,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 			"Annoncer ron (utilisation de la tuile de l'adversaire pour compléter une main)"
 		};
 		this.updateUI(false, "Que faire ?" + input);
-		action_id = this.askChoice(actions, false);
+		action_id = this.askActionChoice(actions, false);
 
 		if (action_id == 0) {
 			this.playPioche();
@@ -220,7 +215,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 			"Annoncer kan (complétion d'un carré, il faudra repiocher)"
 		};
 		this.updateUI(false, "Que faire ?");
-		action_id = this.askChoice(actions, false);
+		action_id = this.askActionChoice(actions, false);
 		if (action_id == 0) {
 			tuile_index = this.askHandChoice();
 			this.poseTuile(tuile_index);
@@ -339,7 +334,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		}
 	}
 
-	private int askChoice(String[] values, boolean horizontal) {
+	private int askActionChoice(String[] values, boolean horizontal) {
 		this.showChoices(values, horizontal, true);
 		return this.askIntInput(values.length);
 	}
@@ -347,7 +342,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	private int askIntInput(int inputMax) {
 		int ret = inputMax;
 		while (ret >= inputMax) {
-			Scanner keyboard = new Scanner(System.in);
+			Scanner keyboard = new Scanner(System.in); // XXX interrompt le gameflow
 			try {
 				ret = keyboard.nextInt();
 			} catch (Exception e) {
@@ -361,7 +356,9 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	private void updateUI(boolean withChoice, String prompt) {
 		this.resetTerminal();
 		this.printBoard();
-		this.showChoices(this.getEmojiStrings(this.hand), true, withChoice);
+		this.showChoices(this.getEmojiStrings(this.hand), true, withChoice); // cesser les clowenries
+		// avec withChoice et faire une méthode dédiée à l'affichage horizontal, ce qui limitera
+		// par ailleurs les nombre de boucles d'input TODO
 		System.out.println("\n" + prompt);
 	}
 

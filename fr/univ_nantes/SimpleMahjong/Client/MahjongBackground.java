@@ -20,13 +20,9 @@ public class MahjongBackground extends Thread {
 	}
 
 	private void tryRun1Cycle() throws InterruptedException {
-		// synchronized (this) {
-		// 	System.out.println("Background thread pausing");
-		// 	wait();
-		// }
 		System.out.println("Background thread running");
 		String input = this.askRawInput();
-		this.player.mainCycle(input);
+		this.player.mainCycle(input); // TODO devrait notify le player pour faire avancer l'affichage ??
 	}
 
 	private String askRawInput() {

@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 public class MahjongTableManager extends UnicastRemoteObject implements MahjongTableInterface {
 	private int nbPlayers = 0;
 	private MahjongPlayerInterface[] players;
-	private LinkedList<AbstractTuile> river = new LinkedList<AbstractTuile>(); // TODO n'a pas lieu d'être ici
 	private ArrayList<AbstractTuile> muraille = new ArrayList<AbstractTuile>();
 
 	protected MahjongTableManager(MahjongPlayerInterface[] players) throws RemoteException {
@@ -56,7 +55,7 @@ public class MahjongTableManager extends UnicastRemoteObject implements MahjongT
 		}
 
 		try {
-			System.out.println("table, ligne 59, ok");
+			System.out.println("table, ligne 59, ok"); // XXX peut-on faire ça en un seul for ?
 			for (int i=0; i<4; i++) {
 				if (!VENTS[i].equals("東")) {
 					this.players[i].startGame(false);
@@ -67,9 +66,10 @@ public class MahjongTableManager extends UnicastRemoteObject implements MahjongT
 					this.players[i].startGame(true);
 				}
 			}
-			// XXX TODO à éclaicir ^
+			System.out.println("table, ligne 70, fin du try");
 		} catch(Exception e) {
-			System.out.println("Perte de la connexion avec l'un des joueurs."); // TODO dire lequel
+			// System.out.println("Perte de la connexion avec l'un des joueurs."); // TODO dire lequel
+			System.out.println("[erreur au démarrage des joueurs] " + e); // XXX
 			System.out.println(e);
 		}
 	}
