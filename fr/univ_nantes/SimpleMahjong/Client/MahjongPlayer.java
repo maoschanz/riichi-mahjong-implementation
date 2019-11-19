@@ -286,18 +286,16 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		try {
 			AbstractTuile temp = this.lastPlayer.getLastTuile();
 			switch(s) {
-				case "ron":
-					// victoire TODO
+				case "ron": // victoire par vol
+					// TODO
 					break;
-				case "chii":
-					// suite TODO
+				case "chii": // suite
+					removed = this.getTuilesPourSuite(temp.getSortId());
 					break;
-				case "pon":
-					// brelan
+				case "pon": // brelan
 					removed = this.getTuilesWithId(temp.getSortId(), 2);
 					break;
-				case "kan":
-					// carré
+				case "kan": // carré
 					removed = this.getTuilesWithId(temp.getSortId(), 3);
 					break;
 				default:
@@ -313,6 +311,40 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 			// soit RemoteException soit NullPointerException soit Exception
 			System.out.println("Erreur lors du vol d'une tuile : " + e);
 		}
+	}
+
+	private ArrayList<AbstractTuile> getTuilesPourSuite(int stolenId) throws Exception {
+		ArrayList<AbstractTuile> removed = new ArrayList<AbstractTuile>();
+		// TODO le problème est compliqué parce qu'on aura souvent plusieurs possibilités de
+		// suites, genre 3456 peut être 345+6 ou 3+456. Il faudrait limite demander au joueur de
+		// désigner quelle suite il veut faire et juste vérifier que c'est valide puis les retirer ?
+		try {
+			boolean stolenIsLower = (idExistsInHand(stolenId + 1) && idExistsInHand(stolenId + 2));
+			boolean stolenIsMiddle = (idExistsInHand(stolenId + 1) && idExistsInHand(stolenId - 1));
+			boolean stolenIsUpper = (idExistsInHand(stolenId - 1) && idExistsInHand(stolenId - 2));
+		} catch (Exception e) {
+			// On n'affiche pas d'erreur ici car on s'attend totalement à ce que des exceptions
+			// soient levées ici lors d'une exécution normale.
+		}
+
+		if (stolenIsLower && !stolenIsMiddle && !stolenIsUpper) {
+			removed = this.getTuilesWithId(stolenId + 1, 1);
+			removed.addAll(this.getTuilesWithId(stolenId + 2, 1));
+		} else if (!stolenIsLower && stolenIsMiddle && !stolenIsUpper) {
+			removed = this.getTuilesWithId(stolenId + 1, 1);
+			removed.addAll(this.getTuilesWithId(stolenId - 1, 1));
+		} else if (!stolenIsLower && !stolenIsMiddle && stolenIsUpper) {
+			removed = this.getTuilesWithId(stolenId - 1, 1);
+			removed.addAll(this.getTuilesWithId(stolenId - 2, 1));
+		} else {
+			// TODO poser la question
+			throw new Exception("getTuilesPourSuite : interaction à demander");
+		}
+		return removed;
+	}
+
+	private boolean idExistsInHand(int tuileId) throws Exception {
+		return (this.getTuilesWithId(tuileId, 1).size() > 0);
 	}
 
 	private ArrayList<AbstractTuile> getTuilesWithId(int sortId, int number) throws Exception {
