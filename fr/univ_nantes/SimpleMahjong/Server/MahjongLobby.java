@@ -19,7 +19,7 @@ public class MahjongLobby extends UnicastRemoteObject implements MahjongLobbyInt
 	public void registerPlayer(MahjongPlayerInterface player, String pseudo) throws RemoteException {
 		System.out.println("Requête d'un nouveau joueur (" + (this.nbPlayers+1) + "/4): " + pseudo);
 		this.joueurs[this.nbPlayers] = player;
-		this.nbPlayers++; // XXX atomicité ?
+		this.nbPlayers++; // XXX atomicité ? TODO
 		if (this.nbPlayers == 4) {
 			this.nbPlayers = 0;
 			new MahjongTableManager(joueurs); // XXX probablement un pointeur vers le tableau des

@@ -161,11 +161,11 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 
 	private void playCycleNormal(String input) throws RemoteException {
 		this.faireActionJeu(input);
-		this.isPlaying = false; // XXX pas fiable, on devrait se reposer sur les vents je pense
+		this.isPlaying = false; // XXX très pas fiable je trouve
+		this.playerDroite.continueGame(true);
 		this.playerGauche.continueGame(false);
 		this.playerFace.continueGame(false);
 		this.updateUI(false, "[annonces invalides pour le moment (attente du joueur suivant)]");
-		this.playerDroite.continueGame(true);
 	}
 
 	private void faireActionJeu(String input) {
@@ -195,7 +195,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 			this.piocheTuile();
 			Collections.sort(this.hand);
 			// TODO update l'interface pour montrer la rivière modifiée
-			// this.showChoices(this.getEmojiStrings(this.hand), true, false); // vraiment ? FIXME à vérifier
+			// this.showHorizontalChoices(this.getEmojiStrings(this.hand), false); // vraiment ? FIXME à vérifier
 		} else if (action_id == 4) {
 			this.volLastTuile("ron");
 			// TODO ...et ? victoire
@@ -208,26 +208,25 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		this.piocheTuile();
 		Collections.sort(this.hand);
 		String[] actions = {
-			"Se défausser d'une tuile", // XXX l'UX est améliorable en proposant directement les
-			// numéros pour défausser et en dessous les actions tsumo et kan avec les numéros suivants
-			// Ça simplifierait d'ailleurs le code
+			// "Se défausser d'une tuile", = choix 0 à 13 ; les actions suivantes étant 14 et 15
 			"Annoncer tsumo (main complétée par la pioche)",
 			"Annoncer kan (complétion d'un carré, il faudra repiocher)"
 		};
-		this.updateUI(false, "Que faire ?");
-		action_id = this.askActionChoice(actions, false);
-		if (action_id == 0) {
-			tuile_index = this.askHandChoice();
-			this.poseTuile(tuile_index);
-		} else if (action_id == 1) {
+		String indict = String.format(" (0 à %d = se défausser de la tuile)", this.hand.size() - 1);
+		this.updateUI(true, "Que faire ?" + indict);
+		action_id = this.askActionChoice(actions, true);
+		int tuile_indexs = this.hand.size() - 1;
+		if (action_id <= tuile_indexs) {
+			this.poseTuile(action_id);
+		} else if (action_id == tuile_indexs + 1) {
 			// fin théorique de la partie (à faire vérifier par le serveur ?)
-		} else if (action_id == 2) {
+		} else if (action_id == tuile_indexs + 2) {
 			this.volLastTuile("kan");
 			// XXX si on peut kan est-ce qu'on peut faire autre chose ?
 			this.piocheTuile();
 			Collections.sort(this.hand);
 			// TODO update l'interface pour montrer la rivière modifiée
-			// this.showChoices(this.getEmojiStrings(this.hand), true, false); // vraiment ? FIXME à vérifier
+			// this.showHorizontalChoices(this.getEmojiStrings(this.hand), false); // vraiment ? FIXME à vérifier
 		}
 	}
 
@@ -306,43 +305,34 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Asking input and printing the UI ////////////////////////////////////////////////////////////
 
-	private int askHandChoice() {
-		this.updateUI(true, "Choisissez une tuile à jeter :");
-		return this.askIntInput(this.hand.size());
-	}
-
-	private void showChoices(String[] values, boolean horizontal, boolean showNum) {
-		if (horizontal) {
-			String l1 = "";
-			String l2 = "";
-			for(int i=0; i < values.length; i++) {
-				l1 += "[" + values[i] + "]	";
-				l2 += "(" + i + ")	";
-			}
-			System.out.println(l1);
-			if (showNum) {
-				System.out.println(l2);
-			}
-		} else if (showNum) {
-			for(int i=0; i < values.length; i++) {
-				System.out.println("(" + i + ") - " + values[i]);
-			}
-		} else {
-			for(int i=0; i < values.length; i++) {
-				System.out.println(values[i]);
-			}
+	private void showHorizontalChoices(String[] values, boolean showNum) {
+		String l1 = "";
+		String l2 = "";
+		for(int i=0; i < values.length; i++) {
+			l1 += "[" + values[i] + "]	";
+			l2 += "(" + i + ")	";
+		}
+		System.out.println(l1);
+		if (showNum) {
+			System.out.println(l2);
 		}
 	}
 
-	private int askActionChoice(String[] values, boolean horizontal) {
-		this.showChoices(values, horizontal, true);
-		return this.askIntInput(values.length);
+	private int askActionChoice(String[] values, boolean withHand) {
+		int minInput = 0;
+		if (withHand) {
+			minInput += this.hand.size();
+		}
+		for(int i=0; i < values.length; i++) {
+			System.out.println("(" + (i + minInput) + ") - " + values[i]);
+		}
+		return this.askIntInput(minInput + values.length);
 	}
 
 	private int askIntInput(int inputMax) {
 		int ret = inputMax;
-		while (ret >= inputMax) {
-			Scanner keyboard = new Scanner(System.in); // XXX interrompt le gameflow
+		while (ret >= inputMax || ret < 0) {
+			Scanner keyboard = new Scanner(System.in);
 			try {
 				ret = keyboard.nextInt();
 			} catch (Exception e) {
@@ -356,9 +346,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	private void updateUI(boolean withChoice, String prompt) {
 		this.resetTerminal();
 		this.printBoard();
-		this.showChoices(this.getEmojiStrings(this.hand), true, withChoice); // cesser les clowenries
-		// avec withChoice et faire une méthode dédiée à l'affichage horizontal, ce qui limitera
-		// par ailleurs les nombre de boucles d'input TODO
+		this.showHorizontalChoices(this.getEmojiStrings(this.hand), withChoice);
 		System.out.println("\n" + prompt);
 	}
 
@@ -368,7 +356,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	}
 
 	private void printMurMort() {
-		// TODO pourrait être implémenté, mais honnêtement j'ai la flemme
+		// TODO pourrait être implémenté, mais honnêtement ya plus prioritaire
 		String mur = "▉▉▉▉▉▉▉";
 		System.out.print("Indicateurs de dora : " + mur);
 	}
