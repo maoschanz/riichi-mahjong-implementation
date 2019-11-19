@@ -6,11 +6,15 @@ public abstract class AbstractTuile implements Comparable, Serializable {
 	protected int exemplaire;
 	protected String name;
 	protected String label;
-	public int sortId; // XXX
+	protected int sortId; // XXX
 
 	public AbstractTuile (int exemplaire, int chiffre) {
 		this.chiffre = chiffre;
 		this.exemplaire = exemplaire;
+	}
+
+	public int getSortId() {
+		return this.sortId;
 	}
 
 	public String getName() {
@@ -22,7 +26,7 @@ public abstract class AbstractTuile implements Comparable, Serializable {
 	}
 
 	public int compareTo(Object autre) {
-		return this.sortId - ((AbstractTuile)autre).sortId;
+		return this.sortId - ((AbstractTuile)autre).getSortId();
 	}
 
 }
