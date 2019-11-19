@@ -21,7 +21,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	private MahjongPlayerInterface playerDroite; // shimocha
 	private MahjongPlayerInterface playerFace; // toimen
 	private MahjongPlayerInterface playerGauche; // kamicha
-	private int[] riversLength = new int[]{0,0,0,0};
+	private int[] riversLength = new int[]{2, 2, 2, 2}; // car on traite la rivière comme une chaîne
 	private MahjongPlayerInterface lastPlayer;
 	private final static String START_COLOR = "\033[30;106m";
 	private final static String END_COLOR = "\033[0m";
@@ -173,16 +173,17 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		// 13 tuiles → on pioche → 14 donc → possibilité d'annoncer tsumo (ou kan ?), ou défausse
 		// (ou défausse avec riichi) (→ si kan, repiocher) → joueur suivant
 		int action_id = 0;
-		// XXX kan ?
-		String[] actions = {
-			"Piocher",
-			"Annoncer chii (utilisation de la tuile de l'adversaire pour compléter une suite de 3 tuiles)",
-			"Annoncer pon (utilisation de la tuile de l'adversaire pour compléter un brelan)",
-			"Annoncer kan (utilisation de la tuile de l'adversaire pour compléter un carré)",
-			"Annoncer ron (utilisation de la tuile de l'adversaire pour compléter une main)"
-		};
-		this.updateUI(false, "Que faire ?" + input);
-		action_id = this.askActionChoice(actions, false);
+		if (this.lastPlayer != null) {
+			String[] actions = {
+				"Piocher",
+				"Annoncer chii (utilisation de la tuile de l'adversaire pour compléter une suite de 3 tuiles)",
+				"Annoncer pon (utilisation de la tuile de l'adversaire pour compléter un brelan)",
+				"Annoncer kan (utilisation de la tuile de l'adversaire pour compléter un carré)",
+				"Annoncer ron (utilisation de la tuile de l'adversaire pour compléter une main)"
+			};
+			this.updateUI(false, "Que faire ?" + input);
+			action_id = this.askActionChoice(actions, false);
+		} // else on ne peut que piocher donc on ne s'embarrasse pas de la 1ère question
 
 		if (action_id == 0) {
 			this.playPioche();
@@ -221,7 +222,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		if (action_id <= hsize1) {
 			this.poseTuile(action_id);
 		} else if (action_id == hsize1 + 1) {
-			// fin théorique de la partie (à faire vérifier par le serveur ?)
+			// fin théorique de la partie (à faire vérifier TODO)
 		} else if (action_id == hsize1 + 2) {
 			this.volLastTuile("kan");
 			this.piocheTuile();
@@ -245,7 +246,6 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 			}
 		}
 		// System.out.println("action_id " + action_id);
-
 		if (action_id > 0) {
 			this.volLastTuile(actions[action_id]);
 		// } else {
@@ -274,7 +274,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	}
 
 	private void volLastTuile(String s) {
-		// System.out.println("annonce : " + s); // TODO
+		// System.out.println("annonce : " + s);
 		ArrayList<AbstractTuile> removed = new ArrayList<AbstractTuile>();
 		try {
 			AbstractTuile temp = this.lastPlayer.getLastTuile();
@@ -304,9 +304,9 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 			}
 		} catch (Exception e) {
 			// soit RemoteException soit NullPointerException soit Exception
-			System.out.println("Erreur lors du vol d'une tuile : " e)
+			System.out.println("Erreur lors du vol d'une tuile : " + e);
 		}
-		// TODO prendre le tour
+		// TODO FIXME prendre le tour
 	}
 
 	private ArrayList<AbstractTuile> getTuilesWithId(int sortId, int number) throws Exception {
@@ -364,7 +364,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		return ret;
 	}
 
-	// XXX TODO virer le withChoice plus tard
+	// XXX virer le withChoice plus tard
 	private void updateUI(boolean withChoice, String prompt) {
 		this.resetTerminal();
 		this.printBoard();
@@ -377,11 +377,11 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		System.out.flush();
 	}
 
-	private void printMurMort() {
-		// TODO pourrait être implémenté, mais honnêtement ya plus prioritaire
-		String mur = "▉▉▉▉▉▉▉";
-		System.out.print("Indicateurs de dora : " + mur);
-	}
+	// private void printMurMort() {
+		// XXX pourrait être implémenté, mais honnêtement ya plus prioritaire
+	// 	String mur = "▉▉▉▉▉▉▉";
+	// 	System.out.print("Indicateurs de dora : " + mur);
+	// }
 
 	private void printJoueur(MahjongPlayerInterface j) {
 		System.out.println("");
@@ -408,8 +408,6 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	private void printStatus() {
 		System.out.print(START_COLOR);
 		System.out.print(" Mahjong ");
-		// System.out.print("[Vous : " + this.pseudo + " - " + this.vent + "] ");
-		// System.out.print("[Joueur courant : " + /*TODO +*/ "] ");
 		// this.printMurMort();
 		System.out.println(END_COLOR);
 	}

@@ -37,7 +37,7 @@ public class MahjongTableManager extends UnicastRemoteObject implements MahjongT
 		Collections.shuffle(this.muraille);
 		// retourner un indicateur de dora (TODO si je suis vraiment motivé)
 
-		String[] VENTS= {"東", "南", "西", "北"}; // TODO passer des TuileVent plutôt
+		String[] VENTS= {"東", "南", "西", "北"};
 		try {
 			for (int i=0; i<4; i++) {
 				this.players[i].initTable(this);
@@ -55,7 +55,7 @@ public class MahjongTableManager extends UnicastRemoteObject implements MahjongT
 		}
 
 		try {
-			System.out.println("table, ligne 59, ok"); // XXX peut-on faire ça en un seul for ?
+			// System.out.println("table, ligne 59, ok"); // XXX peut-on faire ça en un seul for ?
 			for (int i=0; i<4; i++) {
 				if (!VENTS[i].equals("東")) {
 					this.players[i].startGame(false);
@@ -66,9 +66,7 @@ public class MahjongTableManager extends UnicastRemoteObject implements MahjongT
 					this.players[i].startGame(true);
 				}
 			}
-			System.out.println("table, ligne 70, fin du try");
 		} catch(Exception e) {
-			// System.out.println("Perte de la connexion avec l'un des joueurs."); // TODO dire lequel
 			System.out.println("[erreur au démarrage des joueurs] " + e); // XXX
 			System.out.println(e);
 		}
