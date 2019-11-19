@@ -84,7 +84,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 
 	public void startGame(boolean isMe) throws RemoteException {
 		this.isPlaying = isMe;
-		this.updateRiversLength(); // XXX chelou que ce soit là non ?
+		this.updateRiversLength();
 		// System.out.println("[fin du startGame, ligne 108]");
 		this.updateUI(false, "************"); // XXX
 	}
@@ -92,9 +92,9 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	public void continueGame(boolean isMe) throws RemoteException {
 		// System.out.println("[début du continueGame, ligne 90] " + isMe);
 		this.isPlaying = isMe;
-		this.updateRiversLength(); // XXX chelou que ce soit là non ?
+		this.updateRiversLength();
 		// System.out.println("[fin du continueGame, ligne 108]");
-		this.updateUI(false, "////////"); // XXX
+		this.updateUI(false, "////////////"); // XXX
 	}
 
 	/*
@@ -155,13 +155,13 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 				this.updateUI(false, "Tapez une annonce si besoin (pon/kan/ron)");
 				this.playAnnonce(input);
 			}
+			this.updatePlayers();
 		} catch (RemoteException e) {
 			System.out.println("[erreur dans le cycle de jeu du plus haut niveau] " + e);
 		}
 	}
 
-	private void playCycleNormal(String input) throws RemoteException {
-		this.faireActionJeu(input);
+	private void updatePlayers() throws RemoteException {
 		this.isPlaying = false; // XXX très pas fiable je trouve
 		this.playerDroite.continueGame(true);
 		this.playerGauche.continueGame(false);
@@ -169,7 +169,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		this.continueGame(false);
 	}
 
-	private void faireActionJeu(String input) {
+	private void playCycleNormal(String input) {
 		// 13 tuiles → on pioche → 14 donc → possibilité d'annoncer tsumo (ou kan ?), ou défausse
 		// (ou défausse avec riichi) (→ si kan, repiocher) → joueur suivant
 		int action_id = 0;
@@ -206,7 +206,6 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 
 	private void playPioche() {
 		int action_id = 0;
-		int tuile_index = 0;
 		this.piocheTuile();
 		String[] actions = {
 			// "Se défausser d'une tuile", = choix 0 à 13 ; les actions suivantes étant 14 et 15
@@ -231,20 +230,28 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		}
 	}
 
-	private void playAnnonce(String input) {
+	private void playAnnonce(String input) throws RemoteException {
+
 		// 13 tuiles → on vole → 14 donc → possibilité d'annoncer ron, pon, kan (ou chii) → si kan,
 		// repiocher [dans le mur mort, et la dernière tuile du mur est ajoutée au mur mort ??? faut
 		// qu'il reste à 14 tuiles, et on révèle un nouvel indicateur de dora] → joueur suivant
 		int action_id = 0;
-		int tuile_index = 0;
 		String[] actions = {"invalid", "pon", "kan", "ron"};
-		this.updateUI(false, "Tapez une annonce si besoin (pon/kan/ron)");
-
 		for(int i=1; i<4; i++) {
 			if (input.equals(actions[i])) {
 				action_id = i;
 			}
 		}
+		if (action_id == 0) {
+			return; // ignorer les annonces invalides
+		}
+		this.isPlaying = true;
+		this.playerDroite.continueGame(false);
+		this.playerGauche.continueGame(false);
+		this.playerFace.continueGame(false);
+		// this.continueGame(false);
+		this.updateUI(false, "Tapez une annonce si besoin (pon/kan/ron)");
+
 		// System.out.println("action_id " + action_id);
 		if (action_id > 0) {
 			this.volLastTuile(actions[action_id]);
@@ -306,7 +313,6 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 			// soit RemoteException soit NullPointerException soit Exception
 			System.out.println("Erreur lors du vol d'une tuile : " + e);
 		}
-		// TODO FIXME prendre le tour
 	}
 
 	private ArrayList<AbstractTuile> getTuilesWithId(int sortId, int number) throws Exception {
@@ -460,6 +466,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	}
 
 	private void updateRiversLength() {
+		// FIXME pas fiable du tout, si une annonce foireuse survient ça sera null notamment
 		this.lastPlayer = null;
 		try {
 			this.updateRiverForPlayer(this, 0);
