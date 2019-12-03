@@ -35,9 +35,9 @@ public class MahjongTableManager extends UnicastRemoteObject implements MahjongT
 			}
 		}
 		Collections.shuffle(this.muraille);
-		// retourner un indicateur de dora (TODO si je suis vraiment motivé)
+		// TODO retourner un indicateur de dora (si je suis vraiment motivé)
 
-		String[] VENTS= {"東", "南", "西", "北"};
+		String[] VENTS= {"東", "南", "西", "北"}; // FIXME shuffle
 		try {
 			for (int i=0; i<4; i++) {
 				this.players[i].initTable(this);

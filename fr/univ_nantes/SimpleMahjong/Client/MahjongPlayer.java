@@ -193,7 +193,6 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 			this.volLastTuile("pon");
 		} else if (action_id == 3) {
 			this.volLastTuile("kan");
-			// XXX si on peut kan est-ce qu'on peut faire autre chose ?
 			this.piocheTuile();
 			Collections.sort(this.hand);
 			// TODO update l'interface pour montrer la rivière modifiée
@@ -231,7 +230,6 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	}
 
 	private void playAnnonce(String input) throws RemoteException {
-
 		// 13 tuiles → on vole → 14 donc → possibilité d'annoncer ron, pon, kan (ou chii) → si kan,
 		// repiocher [dans le mur mort, et la dernière tuile du mur est ajoutée au mur mort ??? faut
 		// qu'il reste à 14 tuiles, et on révèle un nouvel indicateur de dora] → joueur suivant
@@ -315,13 +313,17 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 
 	private ArrayList<AbstractTuile> getTuilesPourSuite(int stolenId) throws Exception {
 		ArrayList<AbstractTuile> removed = new ArrayList<AbstractTuile>();
-		// TODO le problème est compliqué parce qu'on aura souvent plusieurs possibilités de
-		// suites, genre 3456 peut être 345+6 ou 3+456. Il faudrait limite demander au joueur de
-		// désigner quelle suite il veut faire et juste vérifier que c'est valide puis les retirer ?
+		boolean stolenIsLower = false;
 		try {
-			boolean stolenIsLower = (idExistsInHand(stolenId + 1) && idExistsInHand(stolenId + 2));
-			boolean stolenIsMiddle = (idExistsInHand(stolenId + 1) && idExistsInHand(stolenId - 1));
-			boolean stolenIsUpper = (idExistsInHand(stolenId - 1) && idExistsInHand(stolenId - 2));
+			stolenIsLower = (idExistsInHand(stolenId + 1) && idExistsInHand(stolenId + 2));
+		} catch (Exception e) {}
+		boolean stolenIsMiddle = false;
+		try {
+			stolenIsMiddle = (idExistsInHand(stolenId + 1) && idExistsInHand(stolenId - 1));
+		} catch (Exception e) {}
+		boolean stolenIsUpper = false;
+		try {
+			stolenIsUpper = (idExistsInHand(stolenId - 1) && idExistsInHand(stolenId - 2));
 		} catch (Exception e) {
 			// On n'affiche pas d'erreur ici car on s'attend totalement à ce que des exceptions
 			// soient levées ici lors d'une exécution normale.
@@ -337,7 +339,9 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 			removed = this.getTuilesWithId(stolenId - 1, 1);
 			removed.addAll(this.getTuilesWithId(stolenId - 2, 1));
 		} else {
-			// TODO poser la question
+			// TODO le problème est compliqué parce qu'on aura souvent plusieurs possibilités de
+			// suites, genre 3456 peut être 345+6 ou 3+456. Il faudrait donc demander au joueur de
+			// désigner quelle suite il veut faire parmi les possibilités valides.
 			throw new Exception("getTuilesPourSuite : interaction à demander");
 		}
 		return removed;
@@ -402,7 +406,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		return ret;
 	}
 
-	// XXX virer le withChoice plus tard
+	// XXX virer le withChoice plus tard ?
 	private void updateUI(boolean withChoice, String prompt) {
 		this.resetTerminal();
 		this.printBoard();
@@ -433,7 +437,9 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 			}
 			System.out.println(joueurStatus);
 			System.out.println("[Combinaisons annoncées] " + j.getCombis());
-			if (j.equals(this.lastPlayer)) { // FIXME bonne idée mais en pratique pas au point
+			if (j.equals(this.lastPlayer)) {
+				// FIXME bonne idée mais en pratique pas au point : il n'y a pas toujours des tuiles à
+				// voler, même quand la rivière n'est pas vide.
 				System.out.println("[Tuiles défaussées] " + START_COLOR + j.getRiviere() + END_COLOR);
 			} else {
 				System.out.println("[Tuiles défaussées] " + j.getRiviere());
@@ -515,7 +521,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		this.riversLength[index] = j.getRiviere().length(); // ce sont des tailles de chaînes
 		if (lastValueR != this.riversLength[index]) {
 			this.lastPlayer = j;
-			// XXX probablement d'autes choses à faire ici
+			// probablement d'autes choses à faire ici
 		}
 	}
 
