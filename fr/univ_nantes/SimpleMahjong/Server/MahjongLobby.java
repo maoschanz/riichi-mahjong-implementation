@@ -21,12 +21,12 @@ public class MahjongLobby extends UnicastRemoteObject implements MahjongLobbyInt
 		System.out.println("Requête d'un nouveau joueur (" + (this.nbPlayers+1) + "/4): " + pseudo);
 		this.joueurs[this.nbPlayers] = player;
 		synchronized(this) {
-			this.nbPlayers++; // atomicité
+			this.nbPlayers++;
 		}
 		if (this.nbPlayers == 4) {
 			this.nbPlayers = 0;
-			new MahjongTableManager(joueurs); // XXX probablement un pointeur vers le tableau des
-			// joueurs, qui se ferait écraser si un 5ème se connectait ? à vérifier TODO
+			new MahjongTableManager(joueurs);
+			this.joueurs = new MahjongPlayerInterface[4];
 		}
 	}
 

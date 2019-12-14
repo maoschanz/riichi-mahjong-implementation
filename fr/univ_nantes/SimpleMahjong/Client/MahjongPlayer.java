@@ -13,20 +13,23 @@ import java.rmi.server.UnicastRemoteObject;
 
 public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerInterface {
 	private MahjongTableInterface server;
-	private String pseudo;
-	private String vent;
-	private ArrayList<AbstractTuile> hand = new ArrayList<AbstractTuile>();
-	private ArrayList<AbstractTuile> river = new ArrayList<AbstractTuile>();
-	private ArrayList<AbstractTuile> combiShown = new ArrayList<AbstractTuile>();
+	private int[] riversLength = new int[]{2, 2, 2, 2}; // car on traite la rivière comme une chaîne
+	private MahjongPlayerInterface lastPlayer;
+
 	private MahjongPlayerInterface playerDroite; // shimocha
 	private MahjongPlayerInterface playerFace; // toimen
 	private MahjongPlayerInterface playerGauche; // kamicha
-	private int[] riversLength = new int[]{2, 2, 2, 2}; // car on traite la rivière comme une chaîne
-	private MahjongPlayerInterface lastPlayer;
+
+	private String pseudo;
+	private String vent;
+	private boolean isPlaying = false;
+	private ArrayList<AbstractTuile> hand = new ArrayList<AbstractTuile>();
+	private ArrayList<AbstractTuile> river = new ArrayList<AbstractTuile>();
+	private ArrayList<AbstractTuile> combiShown = new ArrayList<AbstractTuile>();
+
 	private final static String START_COLOR = "\033[30;106m";
 	private final static String END_COLOR = "\033[0m";
 	private MahjongBackground bgThread;
-	private boolean isPlaying = false;
 
 	public MahjongPlayer(MahjongLobbyInterface lobby) throws RemoteException {
 		Scanner keyboard = new Scanner(System.in);
@@ -83,10 +86,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	// Gameplay-related interactions
 
 	public void startGame(boolean isMe) throws RemoteException {
-		this.isPlaying = isMe;
-		this.updateRiversLength();
-		// System.out.println("[fin du startGame, ligne 108]");
-		this.updateUI(false, "************"); // XXX
+		this.continueGame(isMe);
 	}
 
 	public void continueGame(boolean isMe) throws RemoteException {
@@ -94,7 +94,12 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		this.isPlaying = isMe;
 		this.updateRiversLength();
 		// System.out.println("[fin du continueGame, ligne 108]");
-		this.updateUI(false, "////////////"); // XXX
+		if (isMe) {
+			this.updateUI(false, "Appuyez sur entrée");
+			// XXX on pourrait peut-être directement actualiser l'interface pour montrer les choix ?
+		} else {
+			this.updateUI(false, "Tapez une annonce si besoin (pon/kan/ron)");
+		}
 	}
 
 	/*
@@ -162,7 +167,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	}
 
 	private void updatePlayers() throws RemoteException {
-		this.isPlaying = false; // XXX très pas fiable je trouve
+		this.isPlaying = false; // XXX pas très fiable je trouve
 		this.playerDroite.continueGame(true);
 		this.playerGauche.continueGame(false);
 		this.playerFace.continueGame(false);
