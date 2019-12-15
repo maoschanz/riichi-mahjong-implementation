@@ -32,6 +32,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	private MahjongBackground bgThread;
 
 	public MahjongPlayer(MahjongLobbyInterface lobby) throws RemoteException {
+		this.printStatus();
 		Scanner keyboard = new Scanner(System.in);
 		System.out.println("Entrez votre pseudo :");
 		try {
@@ -61,7 +62,6 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 
 	public void initHand(String vent) throws RemoteException {
 		this.vent = vent;
-		System.out.println("vent = " + vent);
 		for (int i=0; i<13; i++) {
 			this.piocheTuile();
 		}
@@ -90,13 +90,12 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	}
 
 	public void continueGame(boolean isMe) throws RemoteException {
-		// System.out.println("[début du continueGame, ligne 90] " + isMe);
 		this.isPlaying = isMe;
 		this.updateRiversLength();
-		// System.out.println("[fin du continueGame, ligne 108]");
 		if (isMe) {
 			this.updateUI(false, "Appuyez sur entrée");
-			// XXX on pourrait peut-être directement actualiser l'interface pour montrer les choix ?
+			// il faudrait pouvoir directement actualiser l'interface pour montrer les choix
+			// flemme, pas utile
 		} else {
 			this.updateUI(false, "Tapez une annonce si besoin (pon/kan/ron)");
 		}
@@ -167,7 +166,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	}
 
 	private void updatePlayers() throws RemoteException {
-		this.isPlaying = false; // XXX pas très fiable je trouve
+		this.isPlaying = false;
 		this.playerDroite.continueGame(true);
 		this.playerGauche.continueGame(false);
 		this.playerFace.continueGame(false);
@@ -175,10 +174,11 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	}
 
 	private void playCycleNormal(String input) {
-		// 13 tuiles → on pioche → 14 donc → possibilité d'annoncer tsumo (ou kan ?), ou défausse
-		// (ou défausse avec riichi) (→ si kan, repiocher) → joueur suivant
+		// XXX l'input n'est pas transmis, c'est pas un bug (il n'a pas de sens) mais c'est moche
 		int action_id = 0;
-		if (this.lastPlayer != null) {
+		if (this.lastPlayer != null) { // FIXME cette condition est nulle à chier, lastPlayer tendant
+		// à être pas mal null quand ya des vols et donc que la rivière ne bouge pas comme (mal)
+		// anticipé
 			String[] actions = {
 				"Piocher",
 				"Annoncer chii (utilisation de la tuile de l'adversaire pour compléter une suite de 3 tuiles)",
@@ -186,7 +186,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 				"Annoncer kan (utilisation de la tuile de l'adversaire pour compléter un carré)",
 				"Annoncer ron (utilisation de la tuile de l'adversaire pour compléter une main)"
 			};
-			this.updateUI(false, "Que faire ?" + input);
+			this.updateUI(false, "Que faire ?");
 			action_id = this.askActionChoice(actions, false);
 		} // else on ne peut que piocher donc on ne s'embarrasse pas de la 1ère question
 
@@ -284,7 +284,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 	}
 
 	private void volLastTuile(String s) {
-		// System.out.println("annonce : " + s);
+		// pas très charlie tout ce fatras, faudrait des méthodes dédiées je suppose
 		ArrayList<AbstractTuile> removed = new ArrayList<AbstractTuile>();
 		try {
 			AbstractTuile temp = this.lastPlayer.getLastTuile();
@@ -293,7 +293,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 					// TODO
 					break;
 				case "chii": // suite
-					removed = this.getTuilesPourSuite(temp.getSortId());
+					removed = this.getTuilesPourSuite(temp);
 					break;
 				case "pon": // brelan
 					removed = this.getTuilesWithId(temp.getSortId(), 2);
@@ -304,20 +304,30 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 				default:
 					return; // annonce invalide
 			}
+		} catch (Exception e) {
+			// soit RemoteException soit NullPointerException soit Exception
+			System.out.println("Erreur (1) lors du vol d'une tuile : " + e);
+			// this.playCycleNormal("");
+			// TODO pour le moment si un joueur annonce de la merde invalide, il skippe son tour
+			return;
+		}
+		try {
+			AbstractTuile temp = this.lastPlayer.getLastTuile();
 			this.lastPlayer.removeLastTuile();
 			this.combiShown.add(temp);
 			for(int i=0; i < removed.size(); i++) {
 				this.hand.remove(removed.get(i));
 				this.combiShown.add(removed.get(i));
 			}
-		} catch (Exception e) {
-			// soit RemoteException soit NullPointerException soit Exception
-			System.out.println("Erreur lors du vol d'une tuile : " + e);
+		} catch (RemoteException e) {
+			System.out.println("Erreur (2) lors du vol d'une tuile : " + e);
 		}
 	}
 
-	private ArrayList<AbstractTuile> getTuilesPourSuite(int stolenId) throws Exception {
+	private ArrayList<AbstractTuile> getTuilesPourSuite(AbstractTuile stolenTuile) throws Exception {
 		ArrayList<AbstractTuile> removed = new ArrayList<AbstractTuile>();
+		int stolenId = stolenTuile.getSortId();
+
 		boolean stolenIsLower = false;
 		try {
 			stolenIsLower = (idExistsInHand(stolenId + 1) && idExistsInHand(stolenId + 2));
@@ -334,22 +344,85 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 			// soient levées ici lors d'une exécution normale.
 		}
 
-		if (stolenIsLower && !stolenIsMiddle && !stolenIsUpper) {
+		if ( (stolenIsLower && stolenIsMiddle)	|| (stolenIsMiddle && stolenIsUpper)
+		                                       || (stolenIsLower && stolenIsUpper) ) {
+			boolean[] osef = {stolenIsLower, stolenIsMiddle, stolenIsUpper};
+			osef = this.askFavoriteChii(stolenTuile, osef);
+			stolenIsLower = osef[0];
+			stolenIsMiddle = osef[1];
+			stolenIsUpper = osef[2];
+		}
+
+		if (stolenIsLower) {
+			// [x][][]
 			removed = this.getTuilesWithId(stolenId + 1, 1);
 			removed.addAll(this.getTuilesWithId(stolenId + 2, 1));
-		} else if (!stolenIsLower && stolenIsMiddle && !stolenIsUpper) {
+		} else if (stolenIsMiddle) {
+			// [][x][]
 			removed = this.getTuilesWithId(stolenId + 1, 1);
 			removed.addAll(this.getTuilesWithId(stolenId - 1, 1));
-		} else if (!stolenIsLower && !stolenIsMiddle && stolenIsUpper) {
+		} else if (stolenIsUpper) {
+			// [][][x]
 			removed = this.getTuilesWithId(stolenId - 1, 1);
 			removed.addAll(this.getTuilesWithId(stolenId - 2, 1));
 		} else {
-			// TODO le problème est compliqué parce qu'on aura souvent plusieurs possibilités de
-			// suites, genre 3456 peut être 345+6 ou 3+456. Il faudrait donc demander au joueur de
-			// désigner quelle suite il veut faire parmi les possibilités valides.
-			throw new Exception("getTuilesPourSuite : interaction à demander");
+			throw new Exception("Combinaison invalide");
 		}
 		return removed;
+	}
+
+	/* le genre de merdier qui prend 2h à coder mais sera exécuté très exactement 0 fois */
+	private boolean[] askFavoriteChii(AbstractTuile stolenTuile, boolean[] possibleChiis) {
+		boolean stolenIsLower = possibleChiis[0];
+		boolean stolenIsMiddle = possibleChiis[1];
+		boolean stolenIsUpper = possibleChiis[2];
+		int action_id = -1;
+		this.updateUI(false, "Plusieurs suites sont possible avec cette tuile :");
+
+		if (stolenIsLower && stolenIsMiddle && stolenIsUpper) {
+			// both [x][][], [][x][], and [][][x] are possible
+			String[] actions = {
+				"Utiliser " + stolenTuile + " comme 1ère tuile de la suite",
+				"Utiliser " + stolenTuile + " comme 2ème tuile de la suite",
+				"Utiliser " + stolenTuile + " comme 3ème tuile de la suite"
+			};
+			action_id = this.askActionChoice(actions, false);
+		} else if (stolenIsLower && stolenIsMiddle) {
+			// both [x][][], [][x][] are possible
+			String[] actions = {
+				"Utiliser " + stolenTuile + " comme 1ère tuile de la suite",
+				"Utiliser " + stolenTuile + " comme 2ème tuile de la suite"
+			};
+			action_id = this.askActionChoice(actions, false);
+		} else if (stolenIsLower && stolenIsUpper) {
+			// both [x][][] and [][][x] are possible
+			String[] actions = {
+				"Utiliser " + stolenTuile + " comme 1ère tuile de la suite",
+				"Utiliser " + stolenTuile + " comme 3ème tuile de la suite"
+			};
+			action_id = (this.askActionChoice(actions, false) == 1) ? 2 : 0;
+		} else if (stolenIsMiddle && stolenIsUpper) {
+			// both [][x][], and [][][x] are possible
+			String[] actions = {
+				"Utiliser " + stolenTuile + " comme 2ème tuile de la suite",
+				"Utiliser " + stolenTuile + " comme 3ème tuile de la suite"
+			};
+			action_id = this.askActionChoice(actions, false) + 1;
+		}
+
+		stolenIsLower = false;
+		stolenIsMiddle = false;
+		stolenIsUpper = false;
+		if (action_id == 0) {
+			stolenIsLower = true;
+		} else if (action_id == 1) {
+			stolenIsMiddle = true;
+		} else if (action_id == 2) {
+			stolenIsUpper = true;
+		}
+
+		boolean[] osef = {stolenIsLower, stolenIsMiddle, stolenIsUpper};
+		return osef;
 	}
 
 	private boolean idExistsInHand(int tuileId) throws Exception {
@@ -424,12 +497,6 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		System.out.flush();
 	}
 
-	// private void printMurMort() {
-		// XXX pourrait être implémenté, mais honnêtement ya plus prioritaire
-	// 	String mur = "▉▉▉▉▉▉▉";
-	// 	System.out.print("Indicateurs de dora : " + mur);
-	// }
-
 	private void printJoueur(MahjongPlayerInterface j) {
 		System.out.println("");
 		try {
@@ -442,7 +509,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 			}
 			System.out.println(joueurStatus);
 			System.out.println("[Combinaisons annoncées] " + j.getCombis());
-			if (j.equals(this.lastPlayer)) {
+			if (j.equals(this.lastPlayer) && j.getRiviere().length() > 2) {
 				// FIXME bonne idée mais en pratique pas au point : il n'y a pas toujours des tuiles à
 				// voler, même quand la rivière n'est pas vide.
 				System.out.println("[Tuiles défaussées] " + START_COLOR + j.getRiviere() + END_COLOR);

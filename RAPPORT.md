@@ -2,16 +2,17 @@
 
 <!-- TODO mettre mon nom avant de faire un PDF, mais ne pas le push publiquement -->
 
->idées lumineuses, problèmes rencontrés, 2 pages
+<!-- TODO idées lumineuses, problèmes rencontrés, 2 pages -->
 
 ## Introduction : le jeu du Mahjong
 
-D'origine chinoise, le mahjong est un jeu où 4 joueurs, identifiés par un point
-cardinal, tentent de compléter des combinaisons de tuiles en piochant à tour de
-rôle de nouvelles tuiles et en se défaussant de celles qui les intéressent peu.
+D'origine chinoise, le mahjong est un jeu où 4 joueurs, identifiés chacun par un
+point cardinal, tentent de compléter des combinaisons de tuiles en piochant à
+tour de rôle de nouvelles tuiles et en se défaussant de celles qui les
+intéressent le moins.
 
 Le mahjong s'est répandu au Japon au cours du XXe siècle, où ses règles ont
-évolué pour donner une variante spécifiquement japonaise : le _riichi mahong_,
+évolué pour donner une variante spécifiquement japonaise : le _riichi mahjong_,
 dont une version simplifiée est ici implémentée. En effet, une partie se déroule
 généralement en plusieurs manches, où les mises augmentent petit à petit. Le
 système de mises, de points, etc. n'étant pas implémenté, le projet se focalise
@@ -20,8 +21,8 @@ sur le déroulement d'une unique manche de jeu, simplifié ainsi :
 - Chaque joueur se voit attribuer (au hasard) 13 tuiles, ainsi qu'un point
 cardinal (on parlera de "vents"). Le vent d'est (symbolisé "東") commencera à
 jouer en piochant une 14ème tuile.
-- Le but est de former une main complète :
-	- une paire
+- Le but est de former une main complète, composée de :
+	- 1 paire
 	- 4 combinaisons (suite de 3 tuiles numérotées, brelan, ou carré)
 - Excepté le cas du début de manche, le joueur dont c'est le tour peut, au
 choix :
@@ -36,13 +37,18 @@ choix :
 	"chii, "pon" ou "kan"), et dévoiler la combinaison ainsi formée. Si la
 	combinaison est un carré, le joueur doit piocher pour garder une main de la
 	bonne taille.
-	- Si la tuile obtenue complète entièrement la main et fait gagner le joueur,
-	il faut aussi l'annoncer ("tsumo" si la tuile vient de la pioche ou "ron" si
-	elle vient des tuiles défaussées par un adversaire).
+- Si la tuile obtenue complète entièrement la main et fait gagner le joueur, il
+faut aussi l'annoncer ("tsumo" si la tuile vient de la pioche ou "ron" si elle
+vient des tuiles défaussées par un adversaire).
 - Les joueurs dont ce n'est **pas** le tour de jouer peuvent également à tout
 moment interrompre le cours du jeu en volant eux aussi la tuile défaussée par le
 dernier joueur. Ils ne peuvent cependant annoncer que "pon", "kan" ou "ron" (pas
 "chii").
+
+Étant donné la complexité des règles, et le fait que le jeu soit assez méconnu
+en occident, personne n'était motivé à me suivre dans cette idée, et j'ai donc
+réalisé ce projet seul. Par manque de temps à y consacrer, le jeu n'aura donc
+pas d'interface graphique, et se joue dans un terminal.
 
 ----
 
@@ -80,9 +86,49 @@ compléter telle ou telle combinaison).
 
 ## Les clients (`fr.univ_nantes.SimpleMahjong.Client`)
 
-..........................
+Dans l'architecture mise en œuvre, les clients correspondent aux joueurs.
 
-parler du thread d'arrière-plan
+Suite à son interaction initiale avec le serveur (`MahjongLobby`), le client se
+voit attribuer une table de jeu (`MahjongTableManager`). Cette table présente au
+joueur ses 3 adversaires, dont il conserve alors une référence pour les
+contacter ultérieurement pendant le jeu. Le `MahjongTableManager` initialise
+aussi la main du joueur (13 tuiles) et lui indique son "vent". Si c'est le vent
+d'est, le client pioche alors automatiquement une 14ème tuile et le jeu peut
+commencer.
+
+L'utilisateur va interagir avec l'application via le terminal, où il tapera des
+numéros correspondant à l'action qu'il souhaite effectuer. Ce fonctionnement m'a
+ceci dit vite posé un problème lors de mes premières tentatives d'implémentation
+: récupérer les entrées au clavier avec `Scanner` bloque en effet l'exécution,
+ce qui empêche les autres joueurs d'interrompre le jeu pour voler une tuile par
+exemple.
+
+La solution pour laquelle j'ai opté fut de lancer un thread en arrière-plan de
+chaque client, nommé `MahjongBackground`. Ce thread va demander en boucle une
+entrée au clavier, et dès qu'il en a une il l'envoie à l'objet `MahjongPlayer`
+où la chaîne de caractère entrée au clavier sera traitée.
+
+Si ce n'est pas au tour du joueur ayant fourni cette entrée au clavier, la
+chaîne sera traitée par `MahjongPlayer` comme une annonce préalable au vol d'une
+tuile pour former une combinaison. Si l'annonce est valide, le jeu est alors
+interrompu et le joueur courant devient celui qui a révélé une combinaison.
+
+Quand le joueur fournit une entrée clavier à `MahjongBackground` alors que c'est
+effectivement son tour de jouer, l'entrée est traitée comme un "signal" comme
+quoi il faut lancer les "vraies" boucles de demandes d'entrée, qui n'ont pas
+besoin de dépendre du thread secondaire : les étapes du jeu sont alors traitées
+séquentiellement, jusqu'au moment où on signale aux autres joueurs qu'on a
+terminé. Cette information déclenche chez les autres joueurs une actualisation
+de leur état et de leur interface utilisateur. Notamment, la dernière tuile
+défaussée et l'identité du joueur actuel sont mises à jour.
+
+Le jeu se poursuit ainsi, en transmettant les informations de joueurs à joueurs,
+selon une architecture pair-à-pair. Le serveur n'est contacté que pour piocher
+de nouvelles tuiles.
+
+................fin de partie??
+
+..........................
 
 ## Code commun au serveur et aux clients
 
