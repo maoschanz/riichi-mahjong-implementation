@@ -4,6 +4,8 @@
 
 <!-- TODO idées lumineuses, problèmes rencontrés, 2 pages -->
 
+<!--TODO parler de l'observeur-->
+
 ## Introduction : le jeu du Mahjong
 
 D'origine chinoise, le mahjong est un jeu où 4 joueurs, identifiés chacun par un
@@ -66,6 +68,9 @@ de jeu", les joueurs vont interagir entre eux, et avec le `MahjongTableManager`,
 mais n'auront plus besoin du `MahjongLobby` : celui-ci les oublie donc, et reste
 disponible pour traiter les demandes de nouveaux clients qui voudraient jouer.
 
+N'ayant pas de quoi tester une autre configuration, il est hardcodé que les
+demandes de connexion se font sur `rmi://localhost:8090/lobby`.
+
 ### Gestion d'une partie
 
 Une fois qu'on a les 4 joueurs, on peut commencer à jouer une manche. Pour cela,
@@ -126,9 +131,11 @@ Le jeu se poursuit ainsi, en transmettant les informations de joueurs à joueurs
 selon une architecture pair-à-pair. Le serveur n'est contacté que pour piocher
 de nouvelles tuiles.
 
+...................conflits ??
+
 ................fin de partie??
 
-..........................
+..................parties nulles et autres trucs pas faits
 
 ## Code commun au serveur et aux clients
 
@@ -154,11 +161,30 @@ représentant les divers types de tuiles.
 
 ## Utilisation
 
+### Compiler le projet
+
+Le code a été compilé et testé avec `openjdk 11` et le compilateur `javac` de
+même version.
+
+```
+javac fr/univ_nantes/SimpleMahjong/Tuile/*.java
+javac fr/univ_nantes/SimpleMahjong/Interface/*.java
+javac fr/univ_nantes/SimpleMahjong/Server/*.java
+javac fr/univ_nantes/SimpleMahjong/Client/*.java
+```
+
 ### Lancer le projet
 
-<!-- !!!! FIXME la dépendance tilix !!! -->
+On peut ensuite lancer le serveur avec la commande
+
 ```
-./run.sh full_run
+java fr.univ_nantes.SimpleMahjong.Server.MainMahjongServer
+```
+
+Puis, dans des terminaux distincts, les clients se lancent avec la commande
+
+```
+java fr.univ_nantes.SimpleMahjong.Client.MainMahjongClient
 ```
 
 ### Jouer

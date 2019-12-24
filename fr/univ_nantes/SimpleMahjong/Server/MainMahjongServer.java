@@ -6,7 +6,6 @@ import java.rmi.registry.LocateRegistry;
 public class MainMahjongServer {
 	private static final int portnum = 8090;
 	private static final String lobbyUri = "rmi://localhost:" + portnum + "/lobby";
-	private static String roundUri = "rmi://localhost:" + portnum + "/table";
 
 	public static void main (String[] args) throws Exception {
 		try {

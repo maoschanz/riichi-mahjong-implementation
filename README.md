@@ -2,23 +2,25 @@
 
 a simple Java RMI application where clients can play japanese mahjong ("riichi")
 
-most rules concerning points and scores are not implemented, since they are boring and this is just some exercise to show i know about distributed algorithms
+most rules concerning points and scores are not implemented, since this is just
+some exercise to show i know about distributed algorithms
 
 ----
 
 ## How to install
 
-- Dependencies:
-	- `openjdk-11-jdk`
-	- `tilix` or `gnome-terminal`
-<!-- FIXME faire autrement -->
-- Run `./run.sh full_run` to start 1 server and 4 clients on localhost
+[see this](RAPPORT.md)
 
-> `./run.sh help` to get informations about this amazingly pertinent build system
+<!-- - Dependencies: -->
+<!-- 	- `openjdk-11-jdk` -->
+<!-- 	- `tilix` or `gnome-terminal` -->
+<!-- - Run `./run.sh full_run` to start 1 server and 4 clients on localhost -->
+
+<!-- > `./run.sh help` to get informations about this amazingly pertinent build system -->
 
 ## How to play
 
-[this](RAPPORT.md)
+[see this](RAPPORT.md)
 
 Complete rules: [en](https://en.wikipedia.org/wiki/Japanese_Mahjong), [fr](https://fr.wikipedia.org/wiki/R%C3%A8gles_du_Mah-jong_%28Riichi%29)
 
