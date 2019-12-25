@@ -54,6 +54,46 @@ pas d'interface graphique, et se joue dans un terminal.
 
 ----
 
+## Utilisation
+
+Le jeu suit une architecture client-serveur sur certains aspects, et pair-à-pair
+sur certains autres.
+
+### Compiler le projet
+
+Le code a été compilé et testé avec `openjdk 11` et le compilateur `javac` de
+même version.
+
+```
+javac fr/univ_nantes/SimpleMahjong/Tuile/*.java
+javac fr/univ_nantes/SimpleMahjong/Interface/*.java
+javac fr/univ_nantes/SimpleMahjong/Server/*.java
+javac fr/univ_nantes/SimpleMahjong/Client/*.java
+```
+
+### Lancer le projet
+
+On peut ensuite lancer le serveur avec la commande
+
+```
+java fr.univ_nantes.SimpleMahjong.Server.MainMahjongServer
+```
+
+Puis, dans des terminaux distincts, les clients se lancent avec la commande
+
+```
+java fr.univ_nantes.SimpleMahjong.Client.MainMahjongClient
+```
+
+Il faut lancer un serveur et minimum 4 clients pour pouvoir jouer une partie.
+
+### Jouer
+
+Chaque joueur dispose d'un terminal, et doit entrer au clavier ce qui est
+attendu de lui (cf. les instructions visibles dans l'interface).
+
+----
+
 ## Le serveur (`fr.univ_nantes.SimpleMahjong.Server`)
 
 ### Gestion des requêtes de connexion
@@ -97,16 +137,17 @@ Suite à son interaction initiale avec le serveur (`MahjongLobby`), le client se
 voit attribuer une table de jeu (`MahjongTableManager`). Cette table présente au
 joueur ses 3 adversaires, dont il conserve alors une référence pour les
 contacter ultérieurement pendant le jeu. Le `MahjongTableManager` initialise
-aussi la main du joueur (13 tuiles) et lui indique son "vent". Si c'est le vent
-d'est, le client pioche alors automatiquement une 14ème tuile et le jeu peut
-commencer.
+aussi la main du joueur (13 tuiles) et lui indique son "vent". Le dernier joueur
+à être ainsi initialisé est le vent d'est, dont le client pioche alors
+automatiquement une 14ème tuile : le jeu peut commencer.
 
 L'utilisateur va interagir avec l'application via le terminal, où il tapera des
 numéros correspondant à l'action qu'il souhaite effectuer. Ce fonctionnement m'a
 ceci dit vite posé un problème lors de mes premières tentatives d'implémentation
 : récupérer les entrées au clavier avec `Scanner` bloque en effet l'exécution,
-ce qui empêche les autres joueurs d'interrompre le jeu pour voler une tuile par
-exemple.
+sans possibilité que ce blocage soit levé comme on le ferait avec les classiques
+wait/notify. Cela empêche les autres joueurs d'interrompre le jeu pour voler une
+tuile par exemple.
 
 La solution pour laquelle j'ai opté fut de lancer un thread en arrière-plan de
 chaque client, nommé `MahjongBackground`. Ce thread va demander en boucle une
@@ -131,11 +172,20 @@ Le jeu se poursuit ainsi, en transmettant les informations de joueurs à joueurs
 selon une architecture pair-à-pair. Le serveur n'est contacté que pour piocher
 de nouvelles tuiles.
 
-...................conflits ??
+Pour des raisons pratiques (difficultés à tester le code), le code pour détecter
+la victoire d'un joueur — via la pioche (_tsumo_) ou via le vol d'une tuile à un
+adversaire (_ron_) — n'a pas été implémenté. De même, les cas où la partie est
+nulle (notamment quand la pioche est vide) n'ont pas été pris en charge.
 
-................fin de partie??
-
-..................parties nulles et autres trucs pas faits
+Parmi les fonctionnalités réalisées, on a déjà beaucoup de méthodes assez
+sensibles aux problématiques de l'algorithmique distribuée : l'interruption du
+jeu par les annonces de vol de tuile ont déjà été évoquées sous l'angle du
+problème des entrées au clavier, mais les règles du jeu imposent aussi leurs
+contraintes sur le déroulement de ces interruptions. En effet, il faut toujours
+que chaque joueur garde un nombre de tuile ayant du sens : si l'annonce survient
+— par exemple — entre le moment où le joueur a pioché et le moment où il se
+défausse, l'annonce doit être rejetée pour que le joueur ait une main valide.
+Ce verrouillage est réalisée avec l'attribut booléen `canBeInterrupted`.
 
 ## Code commun au serveur et aux clients
 
@@ -159,40 +209,6 @@ représentant les divers types de tuiles.
 
 ----
 
-## Utilisation
-
-### Compiler le projet
-
-Le code a été compilé et testé avec `openjdk 11` et le compilateur `javac` de
-même version.
-
-```
-javac fr/univ_nantes/SimpleMahjong/Tuile/*.java
-javac fr/univ_nantes/SimpleMahjong/Interface/*.java
-javac fr/univ_nantes/SimpleMahjong/Server/*.java
-javac fr/univ_nantes/SimpleMahjong/Client/*.java
-```
-
-### Lancer le projet
-
-On peut ensuite lancer le serveur avec la commande
-
-```
-java fr.univ_nantes.SimpleMahjong.Server.MainMahjongServer
-```
-
-Puis, dans des terminaux distincts, les clients se lancent avec la commande
-
-```
-java fr.univ_nantes.SimpleMahjong.Client.MainMahjongClient
-```
-
-### Jouer
-
-...........
-
-----
-
 ## Conclusion
 
 .............................
@@ -203,3 +219,4 @@ dire qu'on ne fait rien contre les byzantins
 
 résistance aux pannes
 
+<!-- TODO -->
