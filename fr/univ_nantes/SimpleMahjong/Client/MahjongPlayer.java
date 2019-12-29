@@ -242,7 +242,6 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		int action_id = 0;
 		boolean success = false;
 		this.piocheTuile();
-		Collections.sort(this.hand);
 
 		String[] actions = {
 			// "Se défausser d'une tuile", = choix 0 à 13 ; les actions suivantes étant 14 et 15
@@ -252,6 +251,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		int hsize1 = this.hand.size() - 1;
 		String str1 = String.format("Vous avez pioché [%s] ; que faire ?", this.hand.get(hsize1));
 		String str2 = String.format(" (0 à %d = se défausser de la tuile)", hsize1);
+		Collections.sort(this.hand); // doit rester après l'obtention de str1
 		this.updateUI(true, str1 + str2);
 
 		action_id = this.askActionChoice(actions, true);
@@ -261,6 +261,7 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 		} else if (action_id == hsize1 + 1) {
 			// tsumo
 			// fin théorique de la partie (à faire vérifier TODO)
+			System.out.println("TODO pas implémenté");
 		} else if (action_id == hsize1 + 2) {
 			success = this.volLastTuile("kan");
 			if (success) {
@@ -332,7 +333,8 @@ public class MahjongPlayer extends UnicastRemoteObject implements MahjongPlayerI
 			switch(s) {
 				case "ron": // victoire par vol
 					// TODO
-					break;
+					throw new Exception("TODO le ron n'est pas implémenté");
+					// break;
 				case "chii": // suite
 					removed = this.getTuilesPourSuite(temp);
 					break;
